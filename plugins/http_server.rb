@@ -86,7 +86,7 @@ require "sinatra"
 require "thin"
 
 # HTTP Server plugin for Cinch.
-class Cinch::HTTPServer
+class Cinch::HttpServer
 
   # Micro Sinatra application that is extended by
   # other Cinch plugins by means of including the
