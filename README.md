@@ -44,7 +44,8 @@ As long as this bot runs, everything any program writes to the pipe at
 `/tmp/myfifo` will be echoed to the IRC channel #cinch-bots on
 irc.freenode.net.
 
-== License
+License
+-------
 
 All Cinch plugins found in this repository are licensed under the GNU
 General Public License version 3 or later. See COPYING for the full
