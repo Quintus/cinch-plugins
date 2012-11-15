@@ -44,6 +44,32 @@ As long as this bot runs, everything any program writes to the pipe at
 `/tmp/myfifo` will be echoed to the IRC channel #cinch-bots on
 irc.freenode.net.
 
+List of plugins
+---------------
+
+This repository currently provides the following plugins:
+
+Fifo
+: Opens a FIFO which echoes everything written to it into IRC.
+
+HttpServer
+: Adds a HTTP server facility to cinch, using Sinatra and Thin.
+  This plugin is not meant to be used standalone, but you can
+  built your own request-accepting plugins on top of it.
+
+GithubCommits
+: Uses the HttpServer plugin to create a listener for GitHub’s
+  post-commit webhook that pastes freshly pushed commits into
+  IRC.
+
+LinkInfo
+: When Cinch spots a link, he follows it and pastes the
+  returned HTML’s `title` and `description` meta tags
+  into the channel.
+
+Many plugins are highly configurable, so you really want to check out
+each plugin’s documentation at the top of the respective plugin file.
+
 License
 -------
 
