@@ -3,6 +3,7 @@ require "cinch"
 require_relative "plugins/fifo"
 require_relative "plugins/http_server"
 require_relative "plugins/github_commits"
+require_relative "plugins/link_info"
 
 cinch = Cinch::Bot.new do
 
@@ -25,7 +26,7 @@ cinch = Cinch::Bot.new do
       :port => 1234
     }
 
-    config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits]
+    config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits, Cinch::LinkInfo]
   end
 
   trap "SIGINT" do
