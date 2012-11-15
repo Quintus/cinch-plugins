@@ -22,8 +22,9 @@
 # clearly superior to Ruby’s built-in WEBrick.
 #
 # == Dependencies
-# * Sinatra
-# * Thin
+# Gems:
+# * thin
+# * sinatra
 #
 # == Configuration
 #
@@ -113,8 +114,6 @@ class Cinch::HttpServer
   # other Cinch plugins by means of including the
   # Verbs module and defining routes.
   class CinchHttpServer < Sinatra::Base
-    set :bind, "0.0.0.0"
-    set :port, 1234
     enable :logging
 
     # When starting the server, we set this to the currently
@@ -151,8 +150,14 @@ class Cinch::HttpServer
   listen_to :disconnect, :method => :stop_http_server
 
   def start_http_server(msg)
-    bot.info "Starting HTTP server"
-    @server = Thin::Server.new("0.0.0.0", 1234, CinchHttpServer, signals: false)
+    host = config[:host] || "localhost"
+    port = config[:port] || 1234
+
+    bot.info "Starting HTTP server on #{host} port #{port}"
+    @server = Thin::Server.new(host,
+                               port,
+                               CinchHttpServer,
+                               signals: false)
     @server.app.bot = bot
     @server.start
   end

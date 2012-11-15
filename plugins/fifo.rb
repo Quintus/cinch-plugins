@@ -9,7 +9,7 @@
 # is in.
 #
 # == Dependencies
-# * mkfifo
+# * Gem: mkfifo
 # * A POSIX-conforming operating system. This definitely
 #   excludes Microsoft Windows.
 #
@@ -61,8 +61,8 @@ class Cinch::Fifo
   listen_to :disconnect, :method => :close_fifo
 
   def open_fifo(msg)
-    File.mkfifo(config[:path])
-    File.chmod(config[:mode], config[:path])
+    File.mkfifo(config[:path] || raise(ArgumentError, "No FIFO path given!"))
+    File.chmod(config[:mode] || 0666, config[:path])
 
     File.open(config[:path], "r+") do |fifo|
       bot.info "Opened named pipe (FIFO) at #{config[:path]}"
