@@ -36,7 +36,7 @@
 # Marvin Gülker (Quintus)
 #
 # == License
-# An HTTP server plugin for the Cinch IRC bot.
+# A named-pipe plugin for Cinch.
 # Copyright © 2012 Marvin Gülker
 # 
 # This program is free software: you can redistribute it and/or modify
