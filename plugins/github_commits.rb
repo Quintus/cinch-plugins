@@ -1,4 +1,5 @@
-require "datetime"
+# -*- coding: utf-8 -*-
+require "date"
 require "json"
 
 class Cinch::GithubCommits
@@ -10,8 +11,8 @@ class Cinch::GithubCommits
 
     info = JSON.parse(params[:payload])
     repo = info["repository"]["name"]
-    date = DateTime.parse(info["commits"]["last"]["timestamp"]).strftime('%Y-%m-%d %H:%M')
-    author = info["commits"]["last"]["author"]["name"]
+    date = DateTime.parse(info["commits"].last["timestamp"]).strftime('%Y-%m-%d %H:%M')
+    author = info["commits"].last["author"]["name"]
 
     if info["commits"].count == 1
       say "[#{repo}] One new commit"
