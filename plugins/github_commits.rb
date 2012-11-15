@@ -13,19 +13,19 @@ class Cinch::GithubCommits
     repo = info["repository"]["name"]
     date = DateTime.parse(info["commits"].last["timestamp"]).strftime('%Y-%m-%d %H:%M')
     author = info["commits"].last["author"]["name"]
+    oid = info["commits"].last["id"][0..7]
+    desc = info["commits"].last["message"]
 
     if info["commits"].count == 1
-      say "[#{repo}] One new commit"
-      say "[#{repo}] On #{date}, #{author} commited #{oid}: #{desc}"
+      bot.channels.each{|c| c.send("[#{repo}] One new commit")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited #{oid}: #{desc}")}
     else
-      say "[#{repo}] #{info["commits"].count} new commits"
-      say "[#{repo}] On #{date}, #{author} commited the latest one, #{oid}: #{desc}"
+      bot.channels.each{|c| c.send("[#{repo}] #{info["commits"].count} new commits")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited the latest one, #{oid}: #{desc}")}
     end
-    
+
+    204
   end
 
-  def say(msg)
-    bot.channels.each{|channel| channel.send(msg)}
-  end
 
 end

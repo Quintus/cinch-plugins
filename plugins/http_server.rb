@@ -50,16 +50,37 @@
 #   class SayHello
 #     include Cinch::Plugin
 #     extend Cinch::HttpServer::Verbs
-#   
+#
+#     # Define the route /greet for HTTP GET requests (this
+#     # is what your browser fires normally).
 #     get "/greet" do
+#       # Print a message into all joined IRC channels
 #       bot.channels.each{|channel| channel.send("Hi to everyone!")}
+#
+#       # HTTP statuscode
+#       204 # No Content
 #     end
 #   
 #   end
 #
 # The Cinch bot including this plugin will echo "Hi to everyone!"
 # to all channels he’s currently in when it receives a GET
-# request to the /greet URL.
+# request to the /greet URL. Note there’s one caveat: Inside the
+# HTTP verb methods, i.e. +get+, +post+, etc. you’re not running
+# in the normal class context. Instead, +self+ is set to the context
+# of the underlying Sinatra::Base subclass Cinch::HttpServer::CinchHttpServer.
+# This has three important aspects to note:
+#
+# 1. You cannot call methods defined inside *your* class.
+# 2. To interact with Cinch, call the CinchHttpServer#bot helper
+#    method, which _is_ available and allows you to send stuff
+#    to channels and the like.
+# 3. The return value of the block determines what is sent back
+#    to the requesting client. You shouldn’t use Cinch as a fully-
+#    fleged HTTP server, so in most cases you just want to answer
+#    with 204 No Content and an empty response (see example above).
+#    If you want more, have a look at Sinatra’s excellent README:
+#    http://www.sinatrarb.com/intro#Return%20Values
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -94,6 +115,26 @@ class Cinch::HttpServer
   class CinchHttpServer < Sinatra::Base
     set :bind, "0.0.0.0"
     set :port, 1234
+    enable :logging
+
+    # When starting the server, we set this to the currently
+    # running Cinch::Bot instance.
+    def self.bot=(bot)
+      @bot = bot
+    end
+
+    # The currently running Cinch::Bot instance or +nil+ if
+    # it’s not available yet.
+    def self.bot
+      @bot
+    end
+
+    # Shortcut for calling:
+    #   self.class.bot
+    def bot
+      self.class.bot
+    end
+
   end
 
   # Extend your plugins with this module to allow them
@@ -112,6 +153,7 @@ class Cinch::HttpServer
   def start_http_server(msg)
     bot.info "Starting HTTP server"
     @server = Thin::Server.new("0.0.0.0", 1234, CinchHttpServer, signals: false)
+    @server.app.bot = bot
     @server.start
   end
 
