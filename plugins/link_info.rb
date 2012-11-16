@@ -58,7 +58,7 @@ class Cinch::LinkInfo
     blacklist = DEFAULT_BLACKLIST
     blacklist.concat(config[:blacklist]) if config[:blacklist]
 
-    return if blacklist.any?{|entry| url.downcase.end_with?(entry)}
+    return if blacklist.any?{|entry| url =~ entry}
     debug "URL matched: #{url}"
     html = Nokogiri::HTML(open(url))
 
