@@ -67,6 +67,9 @@ LinkInfo
   returned HTML’s `title` and `description` meta tags
   into the channel.
 
+PidFile
+: Allows you to create a PID file for your Cinch process.
+
 Many plugins are highly configurable, so you really want to check out
 each plugin’s documentation at the top of the respective plugin file.
 
