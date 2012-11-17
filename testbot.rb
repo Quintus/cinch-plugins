@@ -1,13 +1,25 @@
-require "mkfifo"
+# -*- coding: utf-8 -*-
+#
+# This is a sample robot using some of the plugins in this
+# repository, mainly intended for testing purposes. You may
+# find it useful as a working usage example of some of the
+# plugins.
+
+# Require Cinch
 require "cinch"
+
+# Require our plugins
 require_relative "plugins/fifo"
 require_relative "plugins/http_server"
 require_relative "plugins/github_commits"
 require_relative "plugins/link_info"
 
+# Define the robot
 cinch = Cinch::Bot.new do
 
   configure do |config|
+
+    # Cinch options
     config.server     = "irc.freenode.net"
     config.port       = 6697
     config.ssl.use    = true
@@ -17,6 +29,7 @@ cinch = Cinch::Bot.new do
     config.nick     = "mega-cinch"
     config.user     = "cinch"
 
+    # Plugin options
     config.plugins.options[Cinch::Fifo] = {
       :path => "/tmp/myfifo"
     }
@@ -26,6 +39,7 @@ cinch = Cinch::Bot.new do
       :port => 1234
     }
 
+    # List of plugins to load
     config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits, Cinch::LinkInfo]
   end
 
