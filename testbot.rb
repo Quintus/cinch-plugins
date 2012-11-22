@@ -36,7 +36,8 @@ cinch = Cinch::Bot.new do
 
     config.plugins.options[Cinch::HttpServer] = {
       :host => "localhost",
-      :port => 1234
+      :port => 1234,
+      #:logfile => "/tmp/cinch-http.log"
     }
 
     # List of plugins to load
@@ -52,6 +53,14 @@ cinch = Cinch::Bot.new do
     bot.log("Cought SIGTERM, quitting...", :info)
     bot.quit
   end
+
+  # Set up a logger so we have something more persistant
+  # than $stderr. Note this sadly cannot be done in a
+  # plugin, because plugins are loaded after a good number
+  # of log messages have already been created.
+  file = open("/tmp/cinch.log", "a")
+  file.sync = true
+  loggers.push(Cinch::Logger::FormattedLogger.new(file))
 
 end
 
