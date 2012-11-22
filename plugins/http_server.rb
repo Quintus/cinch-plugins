@@ -75,13 +75,23 @@
 # 1. You cannot call methods defined inside *your* class.
 # 2. To interact with Cinch, call the CinchHttpServer#bot helper
 #    method, which _is_ available and allows you to send stuff
-#    to channels and the like.
+#    to channels and the like. It returns the Cinch::Bot instance
+#    currently running.
 # 3. The return value of the block determines what is sent back
 #    to the requesting client. You shouldn’t use Cinch as a fully-
 #    fleged HTTP server, so in most cases you just want to answer
 #    with 204 No Content and an empty response (see example above).
 #    If you want more, have a look at Sinatra’s excellent README:
 #    http://www.sinatrarb.com/intro#Return%20Values
+#
+# == A note about logging
+# Each received HTTP request will be logged via Cinch’s +loggers+
+# mechanism, no separate log file is created. If you want to
+# create persistant logs, add a file logger to Cinch:
+#
+#   file = open("/var/log/cinch.log", "a")
+#   file.sync = true
+#   yourbot.loggers.push(Cinch::Logger::FormattedLogger.new(file)
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -110,11 +120,31 @@ require "thin"
 # HTTP Server plugin for Cinch.
 class Cinch::HttpServer
 
+  # Logging adapter between Rack and Cinch. You can pass an instance
+  # of this class into Rack::CommonLogger.new and it will make the
+  # Rack logger log onto all of Cinch’s registered loggers (at info
+  # level).
+  class CinchLogging
+
+    # Create a new instance of this class. Pass in the
+    # Cinch::Bot instance to log to.
+    def initialize(bot)
+      @bot = bot
+    end
+
+    # This method is called by Rack::CommonLogger when it wants
+    # to write out a line. It delegates to the +info+ method of
+    # the wrapped bot’s +loggers+ attribute.
+    def write(str)
+      @bot.loggers.info(str)
+    end
+
+  end
+
   # Micro Sinatra application that is extended by
   # other Cinch plugins by means of including the
   # Verbs module and defining routes.
   class CinchHttpServer < Sinatra::Base
-    enable :logging
 
     # When starting the server, we set this to the currently
     # running Cinch::Bot instance.
@@ -123,7 +153,8 @@ class Cinch::HttpServer
     end
 
     # The currently running Cinch::Bot instance or +nil+ if
-    # it’s not available yet.
+    # it’s not available yet (i.e. the bot hasn’t been started
+    # yet).
     def self.bot
       @bot
     end
@@ -154,11 +185,25 @@ class Cinch::HttpServer
     port = config[:port] || 1234
 
     bot.info "Starting HTTP server on #{host} port #{port}"
+
+    # Set up thin with our Rack endpoint
     @server = Thin::Server.new(host,
                                port,
                                CinchHttpServer,
                                signals: false)
+
+    # Inject our special rack-to-cinch logging adapter
+    # that makes Rack::CommonLogger log to Cinch’s
+    # registered loggers. We cannot add this middleware
+    # earlier, because we don’t have the requried Cinch::Bot
+    # instance ready prior to calling `start_http_server'.
+    @server.app.use(Rack::CommonLogger, CinchLogging.new(bot))
+
+    # Make the Cinch::Bot instance available inside the HTTP
+    # handlers.
     @server.app.bot = bot
+
+    # Start the HTTP server!
     @server.start
   end
 
