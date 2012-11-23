@@ -13,6 +13,7 @@ require_relative "plugins/fifo"
 require_relative "plugins/http_server"
 require_relative "plugins/github_commits"
 require_relative "plugins/link_info"
+require_relative "plugins/echo"
 
 # Define the robot
 cinch = Cinch::Bot.new do
@@ -41,7 +42,7 @@ cinch = Cinch::Bot.new do
     }
 
     # List of plugins to load
-    config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits, Cinch::LinkInfo]
+    config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits, Cinch::LinkInfo, Cinch::Echo]
   end
 
   trap "SIGINT" do
