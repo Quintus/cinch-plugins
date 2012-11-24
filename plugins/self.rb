@@ -14,9 +14,9 @@
 # == License
 # This module’s code is heavily inspired by the lambdas example
 # in Cinch’s example directory, so I don’t want to relicense code
-# from the Cinch project under the GPL. This isn’t nice, so
+# from the Cinch project under the LGPL. This isn’t nice, so
 # in contrast to most of the other software in this repo, this
-# module isn’t GPL-licensed but is licensed under the 2-clause BSDL.
+# module isn’t LGPL-licensed but is licensed under the 2-clause BSDL.
 #
 # Copyright © Marvin Gülker
 # All rights reserved.

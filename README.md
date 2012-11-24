@@ -77,7 +77,7 @@ License
 -------
 
 All Cinch plugins found in this repository are licensed under the GNU
-General Public License version 3 or later, except where otherwise
-noted in the respective plugin’s file. See COPYING for the full GPL
-license text and each plugin file for a short per-plugin copyright
-statement.
+Lesser General Public License version 3 or later, except where
+otherwise noted in the respective plugin’s file. See COPYING for the
+full GPL license text, COPYING.LESSER for the LGPL license text, and
+each plugin file for a short per-plugin copyright statement.
