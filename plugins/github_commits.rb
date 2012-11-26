@@ -53,10 +53,10 @@ class Cinch::GithubCommits
 
     if info["commits"].count == 1
       bot.channels.each{|c| c.send("[#{repo}] One new commit")}
-      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited #{oid}: #{desc}")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited #{oid}: #{desc.lines.first.chomp}")}
     else
       bot.channels.each{|c| c.send("[#{repo}] #{info["commits"].count} new commits")}
-      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited the latest one, #{oid}: #{desc}")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited the latest one, #{oid}: #{desc.lines.first.chomp}")}
     end
 
     204
