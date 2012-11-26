@@ -124,7 +124,7 @@ class Cinch::Memo
     bot.debug("Remembering a memo from #{msg.user.nick} for #{nick}")
     @memos[nick] << Memo.new(@max_lifetime, memo, msg.user, msg.channel)
 
-    msg.reply("#{msg.user.nick}: OK, I'll notify #{nick} when he enters the channel.")
+    msg.reply("#{msg.user.nick}: OK, I'll notify #{nick} when (s)he enters the channel.")
   end
 
   private
