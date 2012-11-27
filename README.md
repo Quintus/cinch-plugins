@@ -49,26 +49,39 @@ List of plugins
 
 This repository currently provides the following plugins:
 
+Echo
+: Makes Cinch echo messages.
+
 Fifo
 : Opens a FIFO which echoes everything written to it into IRC.
-
-HttpServer
-: Adds a HTTP server facility to cinch, using Sinatra and Thin.
-  This plugin is not meant to be used standalone, but you can
-  built your own request-accepting plugins on top of it.
 
 GithubCommits
 : Uses the HttpServer plugin to create a listener for GitHub’s
   post-commit webhook that pastes freshly pushed commits into
   IRC.
 
+HttpServer
+: Adds a HTTP server facility to cinch, using Sinatra and Thin.
+  This plugin is not meant to be used standalone, but you can
+  built your own request-accepting plugins on top of it.
+
 LinkInfo
 : When Cinch spots a link, he follows it and pastes the
   returned HTML’s `title` and `description` meta tags
   into the channel.
 
+Logging
+: A plugin for creating message-only logfiles you can publish
+  somewhere.
+
 PidFile
 : Allows you to create a PID file for your Cinch process.
+
+Self
+: This is not a plugin, but rather a helper for writing plugins
+  that make Cinch understand messages with start by Cinch’s nickname
+  followed by a colon. See the Echo plugin’s code for a simple
+  example using the ::recognize method provided by this helper.
 
 Many plugins are highly configurable, so you really want to check out
 each plugin’s documentation at the top of the respective plugin file.
