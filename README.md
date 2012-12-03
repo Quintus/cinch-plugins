@@ -2,7 +2,7 @@ Plugin collection for Cinch
 ===========================
 
 This repository contains a number of probably useful plugins for the
-(Cinch)[https://github.com/cinchrb/cinch] IRC bot, the best IRC bot
+[Cinch](https://github.com/cinchrb/cinch) IRC bot, the best IRC bot
 library that ever has been written (at least in Ruby).
 
 Usage
@@ -59,6 +59,11 @@ GithubCommits
 : Uses the HttpServer plugin to create a listener for GitHub’s
   post-commit webhook that pastes freshly pushed commits into
   IRC.
+
+History
+: Ever joined a channel in the middle of a discussion and couldn't
+  follow? This plugin is for you: It enabes Cinch to replay a
+  limited number of messages, solely for you.
 
 HttpServer
 : Adds a HTTP server facility to cinch, using Sinatra and Thin.
