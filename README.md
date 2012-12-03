@@ -62,7 +62,7 @@ GithubCommits
 
 History
 : Ever joined a channel in the middle of a discussion and couldn't
-  follow? This plugin is for you: It enabes Cinch to replay a
+  follow? This plugin is for you: It enables Cinch to replay a
   limited number of messages, solely for you.
 
 HttpServer
