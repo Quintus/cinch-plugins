@@ -52,6 +52,12 @@ class Cinch::LinkInfo
   # Default list of URL regexps to ignore.
   DEFAULT_BLACKLIST = [/\.png$/i, /\.jpe?g$/i, /\.bmp$/i, /\.gif$/i, /\.pdf$/i]
 
+  set :help, <<-HELP
+http[s]://...
+  I’ll fire a GET request at any link I encounter, parse the HTML
+  meta tags, and paste the result back into the channel.
+  HELP
+
   match %r{(https?://.*?)(?:\s|$|,|\.\s|\.$)}, :use_prefix => false
 
   def execute(msg, url)

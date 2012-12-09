@@ -73,6 +73,11 @@ class Cinch::History
   timer 60,           :method => :check_message_age
   match /history/,    :method => :replay, :react_on => :private, :use_prefix => false
 
+  set :help, <<-HELP
+/msg cinch history
+  Sends the most recent messages of the channel to you via PM.
+  HELP
+
   def setup(*)
     @mode          = config[:mode]         || :max_messages
     @max_messages  = config[:max_messages] || 10

@@ -9,11 +9,11 @@
 require "cinch"
 
 # Require our plugins
-require_relative "plugins/fifo"
-require_relative "plugins/http_server"
-require_relative "plugins/github_commits"
-require_relative "plugins/link_info"
+require_relative "plugins/self"
 require_relative "plugins/echo"
+require_relative "plugins/history"
+require_relative "plugins/help"
+require_relative "plugins/memo"
 
 # Define the robot
 cinch = Cinch::Bot.new do
@@ -31,18 +31,13 @@ cinch = Cinch::Bot.new do
     config.user     = "cinch"
 
     # Plugin options
-    config.plugins.options[Cinch::Fifo] = {
-      :path => "/tmp/myfifo"
-    }
 
-    config.plugins.options[Cinch::HttpServer] = {
-      :host => "localhost",
-      :port => 1234,
-      #:logfile => "/tmp/cinch-http.log"
+    config.plugins.options[Cinch::History] = {
+      :max_messages => 1
     }
 
     # List of plugins to load
-    config.plugins.plugins = [Cinch::Fifo, Cinch::HttpServer, Cinch::GithubCommits, Cinch::LinkInfo, Cinch::Echo]
+    config.plugins.plugins = [Cinch::History, Cinch::Echo, Cinch::Help, Cinch::Memo]
   end
 
   trap "SIGINT" do

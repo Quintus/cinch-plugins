@@ -66,11 +66,11 @@ class Cinch::Help
   listen_for /help(.*)/i
 
   set :help, <<-EOF
-help
+cinch help
   List all available plugins.
-help <plugin>
+cinch help <plugin>
   List all commands available in a plugin.
-help search <query>
+cinch help search <query>
   Search all plugin’s commands and list all commands containing
   <query>.
   EOF
