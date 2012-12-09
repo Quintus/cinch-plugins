@@ -120,7 +120,14 @@ class Cinch::History
     # Actual historic(al) response
     @history_mutex.synchronize do
       r = @history.reduce("") do |answer, message|
-        answer + "#{message.time.strftime(@timeformat)} <#{message.user.name}> #{message.message}\n"
+        # Sometimes a message has no user...
+        if message.user
+          nick = message.user.name
+        else
+          nick = "???"
+        end
+
+        answer + "#{message.time.strftime(@timeformat)} <#{nick}> #{message.message}\n"
       end
       msg.reply(r.chomp)
     end
