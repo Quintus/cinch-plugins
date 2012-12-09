@@ -116,7 +116,7 @@ class Cinch::Help
 
     # Act depending on the subcommand.
     if query.empty?
-      response << @intro_message
+      response << @intro_message.strip << "\n"
       response << "Available plugins:\n"
       response << bot.config.plugins.plugins.map{|plugin| format_plugin_name(plugin)}.join(", ")
       response << "\n'help <plugin>' for help on a specific plugin."
