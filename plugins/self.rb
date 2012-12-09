@@ -76,4 +76,12 @@ module Cinch::Self
     match(regexp, hsh)
   end
 
+  # Like ::match, but listens for both private and public messages. For public channel
+  # messages, the prefix is set to the bot’s current nickname, for private messages,
+  # the prefix is disabled completely. All other options are the same as for +match+.
+  def listen_for(regexp, hsh = {})
+    match(regexp, hsh.merge(:prefix => lambda{|msg| Regexp.compile("^#{msg.bot.nick}:\s*")}, :react_on => :channel))
+    match(regexp, hsh.merge(:use_prefix => false, :react_on => :private))
+  end
+
 end
