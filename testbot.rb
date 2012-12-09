@@ -36,6 +36,10 @@ cinch = Cinch::Bot.new do
       :max_messages => 1
     }
 
+    config.plugins.options[Cinch::Help] = {
+      :intro => "%s at your service. Commands starting with /msg are meant to be sent privately, <> indicate mandatory, [] optional parameters."
+    }
+
     # List of plugins to load
     config.plugins.plugins = [Cinch::History, Cinch::Echo, Cinch::Help, Cinch::Memo]
   end

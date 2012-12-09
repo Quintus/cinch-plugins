@@ -7,7 +7,7 @@
 #
 # == Commands
 # [cinch help]
-#   List all plugins.
+#   Print the intro message and list all plugins.
 # [cinch help <plugin>]
 #   List all commands with explanations for a plugin.
 # [cinch help search <query>]
@@ -17,16 +17,32 @@
 # * Cinch::Self helper
 #
 # == Configuration
-# None. In order to add help strings, update your plugins to set +help+
+# Add the following to your bot’s configure.do stanza:
+#
+#   config.plugins[Cinch::Fifo] = {
+#     :intro => "%s at your service."
+#   }
+#
+# [intro]
+#   First message posted when the user issues 'help' to the bot
+#   without any parameters. %s is replaced with Cinch’s current
+#   nickname.
+#
+# == Writing help messages
+# In order to add help strings, update your plugins to set +help+
 # properly like this:
 #
-#   set :help, <<-HELP
+#   class YourPlugin
+#     include Cinch::Plugin
+#
+#     set :help, <<-HELP
 #   command <para1> <para2>
 #     This command does this and that. The description may
 #     as well be multiline.
 #   command2 <para1> [optpara]
 #     Another sample command.
-#   HELP
+#     HELP
+#   end
 #
 # Cinch recognises a command in the help string as one if it starts at
 # the beginning of the line, all subsequent indented lines are considered
@@ -36,6 +52,25 @@
 # as possible, because many IRC servers will block too much text as flooding,
 # resulting in the help messages being cut. Instead, provide a web link or
 # something similar for full-blown descriptions.
+#
+# The command itself may be in any form you want (as long as it’s a single
+# line), but I recommend the following conventions so users know how to
+# talk to the bot:
+#
+# [cinch ...]
+#   A command Cinch understands when posted publicely into the channel,
+#   prefixed with its name (or whatever prefix you want, replace "cinch"
+#   accordingly).
+# [/msg cinch ...]
+#   A command Cinch understands when send directly to him via PM and
+#   without a prefix.
+# [[/msg] cinch ...]
+#   A command Cinch understands when posted publicely with his nick as
+#   a prefix, or privately to him without any prefix.
+# [...]
+#   That is, a bare command without a prefix. Cinch watches the conversion
+#   on the channel, and whenever he encounters this string/pattern he will
+#   take action, without any prefix at all.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -62,15 +97,15 @@ class Cinch::Help
   include Cinch::Plugin
   extend Cinch::Self
 
-  listen_to :connect, :method => :parse_help
+  listen_to :connect, :method => :setup
   listen_for /help(.*)/i
 
   set :help, <<-EOF
-cinch help
-  List all available plugins.
-cinch help <plugin>
+[/msg] cinch help
+  Post a short introduction and list available plugins.
+[/msg] cinch help <plugin>
   List all commands available in a plugin.
-cinch help search <query>
+[/msg] cinch help search <query>
   Search all plugin’s commands and list all commands containing
   <query>.
   EOF
@@ -81,6 +116,7 @@ cinch help search <query>
 
     # Act depending on the subcommand.
     if query.empty?
+      response << @intro_message
       response << "Available plugins:\n"
       response << bot.config.plugins.plugins.map{|plugin| format_plugin_name(plugin)}.join(", ")
       response << "\n'help <plugin>' for help on a specific plugin."
@@ -118,9 +154,16 @@ cinch help search <query>
   #
   #   {Plugin => {"command" => "explanation"}}
   #
-  # where +Plugin+ is the plugin’s class object.
-  def parse_help(msg)
+  # where +Plugin+ is the plugin’s class object. It also parses configuration
+  # options.
+  def setup(msg)
     @help = {}
+
+    if config[:intro]
+      @intro_message = config[:intro] % bot.nick
+    else
+      @intro_message = "#{bot.nick} at your service."
+    end
 
     bot.config.plugins.plugins.each do |plugin|
       @help[plugin] = Hash.new{|h, k| h[k] = ""}
