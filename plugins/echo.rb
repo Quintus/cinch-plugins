@@ -37,6 +37,11 @@ class Cinch::Echo
 
   recognize /echo (.*)/
 
+  set :help, <<-HELP
+cinch echo <text>
+  Echoes <text> back to you.
+  HELP
+
   def execute(msg, text)
     msg.reply(text)
   end
