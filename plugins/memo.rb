@@ -72,7 +72,7 @@ class Cinch::Memo
   recognize /memo for (.*?): (.*)/i, :method => :memoize
 
   set :help, <<-HELP
-cinch memo for <nick>: <message>
+cinch: memo for <nick>: <message>
   Makes me remember a notice for <nick>. When <nick> joins the
   channel, I’ll post <message> indicating you told me to do so.
   If <nick> doesn’t join for a long time, I’ll discard the memo.
