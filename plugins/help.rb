@@ -72,6 +72,9 @@
 #   on the channel, and whenever he encounters this string/pattern he will
 #   take action, without any prefix at all.
 #
+# The word "cinch" in the command string will automatically be replaced with
+# the actual nickname of your bot.
+#
 # == Author
 # Marvin Gülker (Quintus)
 #
@@ -174,7 +177,7 @@ class Cinch::Help
         if line =~ /^\s+/
           @help[plugin][current_command] << line.strip
         else
-          current_command = line.strip
+          current_command = line.strip.gsub(/cinch/i, bot.name)
         end
       end
     end
