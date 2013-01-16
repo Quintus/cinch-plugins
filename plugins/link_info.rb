@@ -50,7 +50,7 @@ class Cinch::LinkInfo
   include Cinch::Plugin
 
   # Default list of URL regexps to ignore.
-  DEFAULT_BLACKLIST = [/\.png$/i, /\.jpe?g$/i, /\.bmp$/i, /\.gif$/i, /\.pdf$/i]
+  DEFAULT_BLACKLIST = [/\.png$/i, /\.jpe?g$/i, /\.bmp$/i, /\.gif$/i, /\.pdf$/i].freeze
 
   set :help, <<-HELP
 http[s]://...
@@ -61,7 +61,7 @@ http[s]://...
   match %r{(https?://.*?)(?:\s|$|,|\.\s|\.$)}, :use_prefix => false
 
   def execute(msg, url)
-    blacklist = DEFAULT_BLACKLIST
+    blacklist = DEFAULT_BLACKLIST.dup
     blacklist.concat(config[:blacklist]) if config[:blacklist]
 
     return if blacklist.any?{|entry| url =~ entry}
@@ -73,7 +73,7 @@ http[s]://...
     end
 
     if node = html.at_xpath('html/head/meta[@name="description"]')
-      msg.reply(node[:content])
+      msg.reply(node[:content].lines.first(3).join)
     end
   rescue => e
     error "#{e.class.name}: #{e.message}"
