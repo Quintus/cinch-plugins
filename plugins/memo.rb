@@ -52,11 +52,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-require_relative "self"
-
 class Cinch::Memo
   include Cinch::Plugin
-  extend Cinch::Self
 
   # Struct encapsulating the information of a single memo.
   # Note that the target nick isn’t stored here, but rather
@@ -66,10 +63,10 @@ class Cinch::Memo
   # Interval to check the remaining lifetime of the memos in.
   LIFETIME_CHECK_INTERVAL = 60 * 30 # 0.5h
 
-  listen_to :connect,                :method => :setup
-  listen_to :join,                   :method => :check_on_join
-  timer LIFETIME_CHECK_INTERVAL,     :method => :check_lifetimes
-  recognize /memo for (.*?): (.*)/i, :method => :memoize
+  listen_to :connect,            :method => :setup
+  listen_to :join,               :method => :check_on_join
+  timer LIFETIME_CHECK_INTERVAL, :method => :check_lifetimes
+  match /memo for (.*?): (.*)/i, :method => :memoize, :prefix => lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
 
   set :help, <<-HELP
 cinch: memo for <nick>: <message>
@@ -80,10 +77,11 @@ cinch: memo for <nick>: <message>
 
   # Initialize the plugin
   def setup(*)
-    @memos = Hash.new{|hsh, k| hsh[k] = []}
+    @memos        = Hash.new{|hsh, k| hsh[k] = []}
     @max_lifetime = config[:max_lifetime] || 7
+    @mutex        = Mutex.new
 
-    bot.info("Maximum memo lifetime set to #{@max_lifetime}.")
+    bot.loggers.info("Maximum memo lifetime set to #{@max_lifetime}.")
   end
 
   # Whenever anyone joins, check if we have memos.
@@ -103,20 +101,28 @@ cinch: memo for <nick>: <message>
 
   # Decrease memo lifetimes.
   def check_lifetimes
-    @memos.each_pair do |nick, memos|
-      # Decrease all this nick’s memos’ lifetimes by one.
-      # If a memo reaches a lifetime of zero, delete it
-      # so we don’t get overloaded.
-      memos.reject! do |memo|
-        memo.lifetime -= 1
+    @mutex.synchronize do
 
-        if memo.lifetime <= 0
-          bot.debug("Memo from #{memo.sender.nick} to #{nick} dropped: Lifetime expired")
-          true
-        else
-          false
+      # Phase 1/2: Erase all outdated memos
+      @memos.each_pair do |nick, memos|
+        # Decrease all this nick’s memos’ lifetimes by one.
+        # If a memo reaches a lifetime of zero, delete it
+        # so we don’t get overloaded.
+        memos.reject! do |memo|
+          memo.lifetime -= 1
+
+          if memo.lifetime <= 0
+            bot.debug("Memo from #{memo.sender.nick} to #{nick} dropped: Lifetime expired")
+            true
+          else
+            false
+          end
         end
       end
+
+      # Phase 2/2: Remove all nicks from the memo hash for whom
+      # we don’t have memos anymore (to prevent memory leaks)
+      @memos.reject!{|nick, memos| memos.empty?}
     end
   end
 
@@ -124,14 +130,19 @@ cinch: memo for <nick>: <message>
   def memoize(msg, nick, memo)
     # Cannot write memos to the bot
     if nick == bot.nick
-      msg.reply("#{msg.user.nick}: Nice try. Forget it.")
+      msg.reply("Nice try. Forget it.", true)
+      return
+    elsif msg.channel.users.any?{|user| user.nick == nick}
+      msg.reply("#{nick} is already in here, you can tell him directly.", true)
       return
     end
 
-    bot.debug("Remembering a memo from #{msg.user.nick} for #{nick}")
-    @memos[nick] << Memo.new(@max_lifetime, memo, msg.user, msg.channel)
+    @mutex.synchronize do
+      bot.debug("Remembering a memo from #{msg.user.nick} for #{nick}")
+      @memos[nick] << Memo.new(@max_lifetime, memo, msg.user, msg.channel)
+    end
 
-    msg.reply("#{msg.user.nick}: OK, I'll notify #{nick} when (s)he enters the channel.")
+    msg.reply("OK, I'll notify #{nick} when (s)he enters the channel.", true)
   end
 
   private
@@ -140,11 +151,13 @@ cinch: memo for <nick>: <message>
   # delivers them to him, deleting them from the list of
   # saved memos.
   def process_memos_for(user)
-    memos = @memos[user.nick]
+    @mutex.synchronize do
+      memos = @memos[user.nick]
 
-    while memo = memos.pop
-      bot.debug("Delivering a memo from #{memo.sender.nick} to #{user.nick}")
-      memo.channel.send("#{user.nick}: Memo from #{memo.sender.nick}: #{memo.message}")
+      while memo = memos.pop
+        bot.debug("Delivering a memo from #{memo.sender.nick} to #{user.nick}")
+        memo.channel.send("#{user.nick}: Memo from #{memo.sender.nick}: #{memo.message}")
+      end
     end
   end
 
