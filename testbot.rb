@@ -13,6 +13,7 @@ require_relative "plugins/echo"
 require_relative "plugins/history"
 require_relative "plugins/help"
 require_relative "plugins/memo"
+require_relative "plugins/vote"
 
 # Define the robot
 cinch = Cinch::Bot.new do
@@ -48,7 +49,7 @@ cinch = Cinch::Bot.new do
     }
 
     # List of plugins to load
-    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Memo]
+    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Memo, Cinch::Vote]
   end
 
   trap "SIGINT" do
