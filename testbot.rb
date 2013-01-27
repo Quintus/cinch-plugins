@@ -26,7 +26,7 @@ cinch = Cinch::Bot.new do
     config.ssl.use    = true
     config.ssl.verify = false
 
-    config.channels = ["#cinch-bots"]
+    config.channels = ["#OpenRubyRMKBotTest"]
     config.nick     = "mega-cinch"
     config.user     = "cinch"
 
@@ -41,7 +41,7 @@ cinch = Cinch::Bot.new do
     }
 
     # List of plugins to load
-    config.plugins.plugins = [Cinch::History, Cinch::Echo, Cinch::Help, Cinch::Memo]
+    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Memo]
   end
 
   trap "SIGINT" do
