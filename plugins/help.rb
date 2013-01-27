@@ -81,27 +81,27 @@
 # == License
 # A help plugin for Cinch.
 # Copyright © 2012 Marvin Gülker
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Help plugin for Cinch.
 class Cinch::Help
   include Cinch::Plugin
-  extend Cinch::Self
 
-  listen_to :connect, :method => :setup
-  listen_for /help(.*)/i
+  listen_to :connect, :method => :on_connect
+  match /help(.*)/i, :prefix => lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}, :react_on => :channel
+  match /help(.*)/i, :use_prefix => false, :react_on => :private
 
   set :help, <<-EOF
 [/msg] cinch help
@@ -159,7 +159,7 @@ class Cinch::Help
   #
   # where +Plugin+ is the plugin’s class object. It also parses configuration
   # options.
-  def setup(msg)
+  def on_connect(msg)
     @help = {}
 
     if config[:intro]
@@ -189,9 +189,9 @@ class Cinch::Help
   def format_command(command, explanation, plugin)
     result = ""
 
-    result << "┌" << "── " << command << " ─── Plugin: " << format_plugin_name(plugin) << " ─" << "\n│"
-    result << explanation.lines.map(&:strip).join(" ").chars.each_slice(80).map(&:join).join("\n│").chop
-    result << "\n" << "└" << "\n"
+    result << "┌─ " << command << " ─── Plugin: " << format_plugin_name(plugin) << " ─" << "\n"
+    result << explanation.lines.map(&:strip).join(" ").chars.each_slice(80).map(&:join).join("\n")
+    result << "\n" << "└ ─ ─ ─ ─ ─ ─ ─ ─\n"
 
     result
   end
