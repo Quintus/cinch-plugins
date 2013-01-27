@@ -23,13 +23,13 @@ cinch = Cinch::Bot.new do
     # Cinch options
 
     # Server stuff
-    config.server     = "irc.freenode.net"
-    config.port       = 6697
-    config.ssl.use    = true
+    config.server     = "localhost"
+    config.port       = 6667
+    config.ssl.use    = false
     config.ssl.verify = false
 
     # User stuff
-    config.channels = ["#OpenRubyRMKBotTest"]
+    config.channels = ["#test"]
     config.nick     = "mega-cinch"
     config.user     = "cinch"
 
