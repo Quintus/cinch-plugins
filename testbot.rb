@@ -9,7 +9,6 @@
 require "cinch"
 
 # Require our plugins
-require_relative "plugins/self"
 require_relative "plugins/echo"
 require_relative "plugins/history"
 require_relative "plugins/help"
@@ -20,17 +19,25 @@ cinch = Cinch::Bot.new do
 
   configure do |config|
 
+    ########################################
     # Cinch options
+
+    # Server stuff
     config.server     = "irc.freenode.net"
     config.port       = 6697
     config.ssl.use    = true
     config.ssl.verify = false
 
+    # User stuff
     config.channels = ["#OpenRubyRMKBotTest"]
     config.nick     = "mega-cinch"
     config.user     = "cinch"
 
+    ########################################
     # Plugin options
+
+    # Default prefix is the bot’s name
+    config.plugins.prefix = lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
 
     config.plugins.options[Cinch::History] = {
       :max_messages => 1

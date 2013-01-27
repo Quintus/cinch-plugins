@@ -14,7 +14,7 @@
 #   List all commands with explanations that contain <query>.
 #
 # == Dependencies
-# * Cinch::Self helper
+# None.
 #
 # == Configuration
 # Add the following to your bot’s configure.do stanza:

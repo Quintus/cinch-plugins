@@ -63,7 +63,7 @@ class Cinch::Memo
   listen_to :join,               :method => :on_join
   listen_to :online,             :method => :on_online
   timer LIFETIME_CHECK_INTERVAL, :method => :check_lifetimes
-  match /memo for (.*?): (.*)/i, :method => :memoize, :react_on => :channel, :prefix => lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
+  match /memo for (.*?): (.*)/i, :method => :memoize, :react_on => :channel
   match /memo for (.*?): (.*)/i, :method => :private_memoize, :react_on => :private, :use_prefix => false
 
   set :help, <<-HELP
