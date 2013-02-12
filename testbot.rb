@@ -14,6 +14,7 @@ require_relative "plugins/history"
 require_relative "plugins/help"
 require_relative "plugins/memo"
 require_relative "plugins/vote"
+require_relative "plugins/quit"
 
 # Define the robot
 cinch = Cinch::Bot.new do
@@ -48,8 +49,12 @@ cinch = Cinch::Bot.new do
       :intro => "%s at your service. Commands starting with /msg are meant to be sent privately, <> indicate mandatory, [] optional parameters."
     }
 
+    config.plugins.options[Cinch::Quit] = {
+      :op => true
+    }
+
     # List of plugins to load
-    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Memo, Cinch::Vote]
+    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Quit]
   end
 
   trap "SIGINT" do
