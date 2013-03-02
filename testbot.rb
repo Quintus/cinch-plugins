@@ -42,7 +42,7 @@ cinch = Cinch::Bot.new do
     config.plugins.prefix = lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
 
     config.plugins.options[Cinch::History] = {
-      :max_messages => 1
+      :max_messages => 10
     }
 
     config.plugins.options[Cinch::Help] = {
@@ -54,7 +54,7 @@ cinch = Cinch::Bot.new do
     }
 
     # List of plugins to load
-    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::Quit]
+    config.plugins.plugins = [Cinch::Help, Cinch::Echo, Cinch::History, Cinch::Quit]
   end
 
   trap "SIGINT" do

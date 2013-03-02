@@ -68,8 +68,11 @@
 class Cinch::History
   include Cinch::Plugin
 
-  listen_to :connect, :method => :setup
-  listen_to :channel, :method => :remember_public_message
+  Entry = Struct.new(:time, :prefix, :message)
+
+  listen_to :connect, :method => :on_connect
+  listen_to :channel, :method => :on_channel
+  listen_to :topic,   :method => :on_topic
   timer 60,           :method => :check_message_age
   match /history/,    :method => :replay, :react_on => :private, :use_prefix => false
 
@@ -78,7 +81,7 @@ class Cinch::History
   Sends the most recent messages of the channel to you via PM.
   HELP
 
-  def setup(*)
+  def on_connect(*)
     @mode          = config[:mode]         || :max_messages
     @max_messages  = config[:max_messages] || 10
     @max_age       = (config[:max_age]     || 5 ) * 60
@@ -87,9 +90,9 @@ class Cinch::History
     @history       = []
   end
 
-  def remember_public_message(msg)
+  def on_channel(msg)
     @history_mutex.synchronize do
-      @history.push(msg)
+      @history << Entry.new(msg.time, msg.user.nick, msg.message)
 
       if @mode == :max_messages
         # In :max_messages mode, let messages over the limit just
@@ -99,13 +102,19 @@ class Cinch::History
     end
   end
 
+  def on_topic(msg)
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, ">>", "#{msg.user.nick} changed the topic to “#{msg.channel.topic}”")
+    end
+  end
+
   # In :max_age mode, remove messages from the history older than
   # the threshold.
   def check_message_age
     return unless @mode == :max_age
 
     @history_mutex.synchronize do
-      @history.delete_if{|msg| Time.now - msg.time > @max_age}
+      @history.delete_if{|entry| Time.now - entry.time > @max_age}
     end
   end
 
@@ -119,18 +128,18 @@ class Cinch::History
 
     # Actual historic(al) response
     @history_mutex.synchronize do
-      r = @history.reduce("") do |answer, message|
-        # Sometimes a message has no user...
-        if message.user
-          nick = message.user.name
-        else
-          nick = "???"
-        end
-
-        answer + "#{message.time.strftime(@timeformat)} <#{nick}> #{message.message}\n"
+      r = @history.reduce("") do |answer, entry|
+        answer + format_entry(entry)
       end
+
       msg.reply(r.chomp)
     end
+  end
+
+  private
+
+  def format_entry(entry)
+    sprintf("[%s] %15s | %s\n", entry.time.strftime(@timeformat), entry.prefix, entry.message)
   end
 
 end
