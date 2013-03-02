@@ -73,6 +73,9 @@ class Cinch::History
   listen_to :connect, :method => :on_connect
   listen_to :channel, :method => :on_channel
   listen_to :topic,   :method => :on_topic
+  listen_to :away,    :method => :on_away
+  listen_to :unaway,  :method => :on_unaway
+  listen_to :action,  :method => :on_action
   timer 60,           :method => :check_message_age
   match /history/,    :method => :replay, :react_on => :private, :use_prefix => false
 
@@ -91,6 +94,8 @@ class Cinch::History
   end
 
   def on_channel(msg)
+    return if msg.message.start_with?("\u0001")
+
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, msg.user.nick, msg.message)
 
@@ -104,7 +109,27 @@ class Cinch::History
 
   def on_topic(msg)
     @history_mutex.synchronize do
-      @history << Entry.new(msg.time, ">>", "#{msg.user.nick} changed the topic to “#{msg.channel.topic}”")
+      @history << Entry.new(msg.time, "##", "#{msg.user.nick} changed the topic to “#{msg.channel.topic}”")
+    end
+  end
+
+  def on_away(msg)
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, "##", "#{msg.user.nick} is away (“#{msg.message}”)")
+    end
+  end
+
+  def on_unaway(msg)
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, "##" "#{msg.user.nick} is back")
+    end
+  end
+
+  def on_action(msg)
+    return unless msg.message =~ /^\u0001ACTION(.*?)\u0001/
+
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, "**", "#{msg.user.nick} #{$1.strip}")
     end
   end
 
