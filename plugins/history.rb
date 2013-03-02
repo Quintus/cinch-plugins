@@ -76,6 +76,8 @@ class Cinch::History
   listen_to :away,    :method => :on_away
   listen_to :unaway,  :method => :on_unaway
   listen_to :action,  :method => :on_action
+  listen_to :leaving, :method => :on_leaving
+  listen_to :join,    :method => :on_join
   timer 60,           :method => :check_message_age
   match /history/,    :method => :replay, :react_on => :private, :use_prefix => false
 
@@ -130,6 +132,18 @@ class Cinch::History
 
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, "**", "#{msg.user.nick} #{$1.strip}")
+    end
+  end
+
+  def on_leaving(msg, user)
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, "<=", "#{user.nick} left the channel")
+    end
+  end
+
+  def on_join(msg)
+    @history_mutex.synchronize do
+      @history << Entry.new(msg.time, "=>", "#{msg.user.nick} entered the channel")
     end
   end
 
