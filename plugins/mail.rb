@@ -68,7 +68,7 @@ class Cinch::Mail
   match /cinch stopmail/,     :method => :unregister, :react_on => :channel
   match /cinch stopmail/,     :method => :unregister, :react_on => :private, :use_prefix => false
 
-  set :help <<-HELP
+  set :help, <<-HELP
 cinch mail to <email>
   Registers you for mailing mentions of your nick.
 /msg cinch mail to <email>
