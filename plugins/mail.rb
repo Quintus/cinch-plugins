@@ -33,7 +33,18 @@
 #   running Cinch.
 #
 # == Configuration
-# None.
+# Add the following to your bot’s configure.do stanza:
+#
+#   config.plugins[Cinch::Memo] = {
+#     :sender_address => "Cinch <cinch@example.org>"
+#   }
+#
+# [sender_address (guessed)]
+#   The address that will show up as the sender address for
+#   the mails sent. If ommitted, an address will be gussed
+#   by looking at the bot’s nick, the IRC network name and
+#   the configured server for Cinch. You should better set
+#   this.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -63,10 +74,10 @@ class Cinch::Mail
   listen_to :connect, :method => :on_connect
   listen_to :channel, :method => :on_channel
 
-  match /cinch mail to (.*)/, :method => :register,   :react_on => :channel
-  match /cinch mail to (.*)/, :method => :register,   :react_on => :private, :use_prefix => false
-  match /cinch stopmail/,     :method => :unregister, :react_on => :channel
-  match /cinch stopmail/,     :method => :unregister, :react_on => :private, :use_prefix => false
+  match /mail to (.*)/, :method => :register,   :react_on => :channel
+  match /mail to (.*)/, :method => :register,   :react_on => :private, :use_prefix => false
+  match /stopmail/,     :method => :unregister, :react_on => :channel
+  match /stopmail/,     :method => :unregister, :react_on => :private, :use_prefix => false
 
   set :help, <<-HELP
 cinch mail to <email>
@@ -92,6 +103,9 @@ cinch stopmail
     end
 
     @registered_users[msg.user.nick] = address
+
+    bot.loggers.info("Registered nick for email notification: #{msg.user.nick}")
+    msg.reply("Successfully registered #{msg.user.nick} for email notifications.")
   end
 
   def unregister(msg)
@@ -101,6 +115,9 @@ cinch stopmail
     end
 
     @registered_users.delete(msg.user)
+
+    bot.loggers.info("Unregistered nick from email notification: #{msg.user.nick}")
+    msg.reply("Successfully unregistered #{msg.user.nick} from email notifications.")
   end
 
   def on_channel(msg)
@@ -113,17 +130,17 @@ cinch stopmail
   private
 
   def deliver(msg, nick)
-    email = Mail.new do
-      from "#{bot.nick} <#{bot.nick}@#{bot.irc.network.name}>"
-      to @registered_users[nick]
-      subject "You have been mentioned in #{msg.channel.name}"
-      body <<-EOF
+    email = Mail.new
+    email[:to]      =  @registered_users[nick]
+    email[:subject] = "You have been mentioned in #{msg.channel.name}"
+    email[:body]    = <<-EOF
 Hi #{nick},
 
 your nick has been mentioned on IRC by #{msg.user.nick} in
-#{msg.channel.name}. Here’s the exact message:
+#{msg.channel.name} on #{bot.config.server} (#{bot.irc.network.name}).
+Here’s the exact message:
 
-#{msg.user.nick} at #{message.time.strftime('%Y-%m-%d %H:%M %:z')}:
+#{msg.user.nick} at #{msg.time.strftime('%Y-%m-%d %H:%M %:z')}:
 > #{msg.message}
 
 If you do no longer wish to receive this notifications, issue
@@ -135,9 +152,30 @@ once you have authenticated against NickServ.
 --
 This is an automatically generated message.
 Do not reply to it.
-      EOF
+    EOF
+
+    if config[:sender_address]
+      email[:from] = config[:sender_address]
+    else
+      # If no sender address is specified, try to use the network name if
+      # it would be valid as an FQDN. If it isn’t, try the bot’s connection
+      # partner. If that isn’t either (weird DNS or "localhost" in testing),
+      # then just append ".invalid" and log a warning.
+      if bot.irc.network.name.to_s.include?(".")
+        email[:from] = "#{bot.nick} <#{bot.nick}@#{bot.irc.network.name}>"
+      elsif bot.config.server.include?(".")
+        email[:from] = "#{bot.nick} <#{bot.nick}@#{bot.config.server}>"
+      else
+        hostname = bot.config.server
+        bot.loggers.warn("Could not find a valid email host name for the bot. Please set the :sender_address configuration directive. Appending '.invalid' for now.")
+
+        hostname += ".invalid"
+        bot.loggers.warn("Forcing hostname address: #{hostname}")
+        email[:from] = "#{bot.nick} <#{bot.nick}@#{hostname}>"
+      end
     end
 
+    bot.loggers.info("Delivering notification email to #{nick} (mentioned by #{msg.user.nick} in #{msg.channel.name})")
     email.delivery_method :sendmail
 
     email.deliver
