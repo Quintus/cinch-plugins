@@ -36,7 +36,8 @@
 # Add the following to your bot’s configure.do stanza:
 #
 #   config.plugins[Cinch::Memo] = {
-#     :sender_address => "Cinch <cinch@example.org>"
+#     :sender_address => "Cinch <cinch@example.org>",
+#     :nojoined => false
 #   }
 #
 # [sender_address (guessed)]
@@ -45,6 +46,13 @@
 #   by looking at the bot’s nick, the IRC network name and
 #   the configured server for Cinch. You should better set
 #   this.
+# [nojoined (false)]
+#   Usually, Cinch doesn’t care whether you have joined the
+#   channel or not when you are mentioned. You will get the
+#   notification email in either case. If you want to suppress
+#   this behaviour, set this option to +true+ and you will
+#   only receive notifactions of mentioned when you are
+#   NOT in the channel.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -123,7 +131,10 @@ cinch stopmail
   def on_channel(msg)
     return if msg.message.start_with?("\u0001") # action message
 
-    nicks = @registered_users.keys.find_all{|nick| msg.message.include?(nick)}
+    channel_nicks = msg.channel.users.keys.map(&:nick)
+    nicks = @registered_users.keys.find_all{|nick| msg.message.include?(nick) && (!config[:nojoined] || !channel_nicks.include?(nick))}
+    #                                              nick is mentioned          && (we dont care about join status || nick is not joined)
+
     nicks.each{|nick| deliver(msg, nick)}
   end
 

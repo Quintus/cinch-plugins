@@ -39,7 +39,8 @@ cinch = Cinch::Bot.new do
     config.plugins.prefix = lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
 
     config.plugins.options[Cinch::Mail] = {
-      :sender_address => "Mega-Cinch <cinch@quintilianus.eu>"
+      :sender_address => "Mega-Cinch <cinch@quintilianus.eu>",
+      :nojoined => true
     }
 
     #config.plugins.options[Cinch::Help] = {
