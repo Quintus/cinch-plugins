@@ -23,7 +23,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::History] = {
+#   config.plugins.options[Cinch::History] = {
 #     :mode => :max_messages,
 #     :max_messages => 10,
 #     # :max_age => 5,

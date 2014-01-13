@@ -10,7 +10,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::Logging] = {
+#   config.plugins.options[Cinch::Logging] = {
 #     :logfile => "/tmp/public.log", # required
 #     :timeformat => "%H:M",
 #     :format => "<%{time}> %{nick}: %{msg},

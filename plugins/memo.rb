@@ -11,7 +11,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::Memo] = {
+#   config.plugins.options[Cinch::Memo] = {
 #     :max_lifetime => 7
 #   }
 #

@@ -19,7 +19,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::Fifo] = {
+#   config.plugins.options[Cinch::Help] = {
 #     :intro => "%s at your service."
 #   }
 #
