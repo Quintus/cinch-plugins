@@ -11,7 +11,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::Quit] = {
+#   config.plugins.options[Cinch::Quit] = {
 #     :op => false
 #   }
 #

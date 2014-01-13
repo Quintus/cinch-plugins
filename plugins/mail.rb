@@ -35,7 +35,7 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins[Cinch::Memo] = {
+#   config.plugins.options[Cinch::Mail] = {
 #     :sender_address => "Cinch <cinch@example.org>",
 #     :nojoined => false
 #   }
