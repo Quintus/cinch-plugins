@@ -10,8 +10,7 @@ require "cinch"
 
 # Require our plugins
 require_relative "plugins/echo"
-require_relative "plugins/help"
-require_relative "plugins/mail"
+require_relative "plugins/logplus"
 
 # Define the robot
 cinch = Cinch::Bot.new do
@@ -38,17 +37,13 @@ cinch = Cinch::Bot.new do
     # Default prefix is the bot’s name
     config.plugins.prefix = lambda{|msg| Regexp.compile("^#{Regexp.escape(msg.bot.nick)}:?\s*")}
 
-    config.plugins.options[Cinch::Mail] = {
-      :sender_address => "Mega-Cinch <cinch@quintilianus.eu>",
-      :nojoined => true
+    config.plugins.options[Cinch::LogPlus] = {
+      :plainlogdir => "/tmp/logs/plainlogs",
+      :htmllogdir  => "/tmp/logs/htmllogs"
     }
-
-    #config.plugins.options[Cinch::Help] = {
-    #  :intro => "%s at your service. Commands starting with /msg are meant to be sent privately, <> indicate mandatory, [] optional parameters."
-    #}
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::Mail]
+    config.plugins.plugins = [Cinch::Echo, Cinch::LogPlus]
   end
 
   trap "SIGINT" do
