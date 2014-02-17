@@ -36,10 +36,24 @@ class Cinch::LogPlus
   listen_to :channel,    :method => :log_public_message
   timer 5,              :method => :check_midnight
 
+  DEFAULT_CSS = <<-CSS
+    <style type="text/css">
+    td.msgnick {
+        border-right: 1px solid black;
+        padding-right: 8px;
+        padding-left: 4px;
+    }
+    td.msgmessage {
+        padding-left: 8px;
+    }
+    </style>
+  CSS
+
   def startup(*)
     @plainlogdir = config[:plainlogdir]
     @htmllogdir  = config[:htmllogdir]
     @timelogformat = config[:timelogformat] = "%H:%M"
+    @extrahead = config[:extrahead] || DEFAULT_CSS
 
     @last_time_check = Time.now
     @plainlogfile    = nil
@@ -130,6 +144,7 @@ class Cinch::LogPlus
   <head>
     <title>Chatlogs #{Time.now.strftime('%Y-%m-%d')}</title>
     <meta charset="utf-8"/>
+#{@extrahead}
   </head>
   <body>
     <table class="chattable">
