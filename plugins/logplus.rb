@@ -90,7 +90,7 @@ class Cinch::LogPlus
   listen_to :topic,      :method => :log_topic
   listen_to :join,       :method => :log_join
   listen_to :leaving,    :method => :log_leaving
-  timer 5,              :method => :check_midnight
+  timer 60,              :method => :check_midnight
 
   # Default CSS used when the :extrahead option is not given.
   # Some default styling.
