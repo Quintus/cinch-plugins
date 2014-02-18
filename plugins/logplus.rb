@@ -63,6 +63,7 @@ class Cinch::LogPlus
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
   listen_to :outmsg,     :method => :log_own_message
+  listen_to :topic,      :method => :log_topic
   timer 5,              :method => :check_midnight
 
   # Default CSS used when the :extrahead option is not given.
@@ -100,6 +101,12 @@ class Cinch::LogPlus
     .msgaction {
        padding-left: 8px;
        font-style: italic;
+    }
+    .msgtopic {
+       padding-left: 8px;
+       font-weight: bold;
+       font-style: italic;
+       color: #920002;
     }
     </style>
   CSS
@@ -162,6 +169,12 @@ class Cinch::LogPlus
       log_own_plainmessage(text, is_notice)
       log_own_htmlmessage(text, is_notice)
     end
+  end
+
+  # Target for /topic commands.
+  def log_topic(msg)
+    log_plaintext_topic(msg)
+    log_html_topic(msg)
   end
 
   private
@@ -266,6 +279,8 @@ class Cinch::LogPlus
     HTML
   end
 
+  # Logs the given action to the plaintext logfile. Does NOT
+  # acquire the file mutex!
   def log_plaintext_action(msg)
     @plainlogfile.puts(sprintf("%{time} **%{nick} %{msg}",
                                :time => msg.time.strftime(@timelogformat),
@@ -273,6 +288,8 @@ class Cinch::LogPlus
                                :msg => msg.action_message))
   end
 
+  # Logs the given action to the HTML logfile Does NOT
+  # acquire the file mutex!
   def log_html_action(msg)
     @messagenum += 1
 
@@ -285,6 +302,29 @@ class Cinch::LogPlus
     HTML
 
     @htmllogfile.write(str)
+  end
+
+  # Logs the given topic change to the HTML logfile. Does NOT
+  # acquire the file mutex!
+  def log_plaintext_topic(msg)
+    @plainlogfile.puts(sprintf("%{time} *%{nick} changed the topic to “%{msg}”.",
+                       :time => msg.time.strftime(@timelogformat),
+                       :nick => msg.user.name,
+                       :msg => msg.message))
+  end
+
+  # Logs the given topic change to the HTML logfile. Does NOT
+  # acquire the file mutex!
+  def log_html_topic(msg)
+    @messagenum += 1
+
+    @htmllogfile.write(<<-HTML)
+      <tr id="msg-#@messagenum">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">*</td>
+        <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{msg.message}”.</td>
+      </tr>
+    HTML
   end
 
   # Write the start bloat HTML to the HTML log file.
