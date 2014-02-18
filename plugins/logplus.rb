@@ -40,13 +40,16 @@
 #   The message we are about to send.
 # [notice]
 #   If true, the message is a NOTICE. Otherwise, it's a PRIVMSG.
+# [privatemsg]
+#   If true, the message is to be sent directly to a user rather
+#   than to a public channel.
 class Cinch::Target
 
   # Override Cinch’s default message sending so so have an event
   # to listen for for our own outgoing messages.
   alias old_msg msg
   def msg(text, notice = false)
-    @bot.handlers.dispatch(:outmsg, nil, text, notice)
+    @bot.handlers.dispatch(:outmsg, nil, text, notice, self.kind_of?(Cinch::User))
     old_msg(text, notice)
   end
 
@@ -143,7 +146,9 @@ class Cinch::LogPlus
   end
 
   # Target for all messages issued by the bot.
-  def log_own_message(msg, text, is_notice)
+  def log_own_message(msg, text, is_notice, is_private)
+    return if is_private # Do not log messages not targetted at the channel
+
     @filemutex.synchronize do
       log_own_plainmessage(text, is_notice)
       log_own_htmlmessage(text, is_notice)
