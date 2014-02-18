@@ -5,7 +5,31 @@
 # plaintext and HTML logs.
 #
 # == Configuration
-# None
+# Add the following to your bot’s configure.do stanza:
+#
+#   config.plugins.options[Cinch::LogPlus] = {
+#     :plainlogdir => "/tmp/logs/plainlogs", # required
+#     :htmllogdir  => "/tmp/logs/htmllogs", # required
+#     :timelogformat => "%H:%M",
+#     :extrahead => ""
+#   }
+#
+# [plainlogdir]
+#   This required option specifies where the plaintext logfiles
+#   are kept.
+# [htmllogdir]
+#   This required option specifies where the HTML logfiles
+#   are kept.
+# [timelogformat ("%H:%M")]
+#   Timestamp format for the messages. The usual date(1) format
+#   string.
+# [extrahead ("much css")]
+#   Extra snippet of HTML to include in the HTML header of
+#   each file. The default is a snippet of CSS to nicely
+#   format the log table, but you can overwrite this completely
+#   by specifying this option. It could also include Javascript
+#   if you wanted. See Cinch::LogPlus::DEFAULT_CSS for the default
+#   value of this option.
 #
 # == Author
 # Marvin Gülker (Quintus)
