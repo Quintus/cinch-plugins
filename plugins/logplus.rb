@@ -242,6 +242,7 @@ class Cinch::LogPlus
   # "opped", "halfopped", "voiced", "".
   def determine_status(msg)
     return "" unless msg.channel # This is nil for leaving users
+    return "" unless msg.user # server-side NOTICEs
 
     if msg.user.name == bot.nick
       "selfbot"
@@ -291,7 +292,7 @@ class Cinch::LogPlus
   def log_plaintext_message(msg)
     @plainlogfile.puts(sprintf("%{time} %{nick} | %{msg}",
                                :time => msg.time.strftime(@timelogformat),
-                               :nick => msg.user.name,
+                               :nick => msg.user.to_s,
                                :msg => msg.message))
   end
 
@@ -304,7 +305,7 @@ class Cinch::LogPlus
     str = <<-HTML
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
-        <td class="msgnick #{determine_status(msg)}">#{msg.user.name}</td>
+        <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
         <td class="msgmessage">#{msg.message}</td>
       </tr>
     HTML
