@@ -62,6 +62,7 @@ class Cinch::LogPlus
 
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
+  listen_to :action,     :method => :log_public_action
   listen_to :outmsg,     :method => :log_own_message
   timer 5,              :method => :check_midnight
 
@@ -155,12 +156,33 @@ class Cinch::LogPlus
     end
   end
 
+  def log_public_action(msg)
+    @filemutex.synchronize do
+
+    end
+  end
+
   private
 
   # Helper method for generating the file basename for the logfiles
   # and appending the given extension (which must include the dot).
   def genfilename(ext)
     Time.now.strftime("%Y-%m-%d") + ext
+  end
+
+  # Helper method for determining the status of the user sending
+  # the message. Returns one of the following strings:
+  # "opped", "halfopped", "voiced", "".
+  def determine_status(msg)
+    if msg.channel.opped?(msg.user)
+      "opped"
+    elsif msg.channel.half_opped?(msg.user)
+      "halfopped"
+    elsif msg.channel.voiced?(msg.user)
+      "voiced"
+    else
+      ""
+    end
   end
 
   # Finish a day’s logfiles and open new ones. Note that for the HTML
@@ -211,21 +233,10 @@ class Cinch::LogPlus
     str = <<-HTML
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick #{determine_status(msg)}">#{msg.user.name}</td>
+        <td class="msgmessage">#{msg.message}</td>
+      </tr>
     HTML
-
-    if msg.channel.opped?(msg.user)
-      nickstatus = "opped"
-    elsif msg.channel.half_opped?(msg.user)
-      nickstatus = "halfopped"
-    elsif msg.channel.voiced?(msg.user)
-      nickstatus = "voiced"
-    else
-      nickstatus = ""
-    end
-
-    str << %Q!        <td class="msgnick #{nickstatus}">#{msg.user.name}</td>\n!
-    str << %Q!        <td class="msgmessage">#{msg.message}</td>\n!
-    str << %Q!        </tr>\n!
 
     @htmllogfile.write(str)
   end
