@@ -75,6 +75,7 @@ class Cinch::LogPlus
     @last_time_check = Time.now
     @plainlogfile    = nil
     @htmllogfile     = nil
+    @messagenum      = 0
 
     @filemutex = Mutex.new
 
@@ -132,6 +133,7 @@ class Cinch::LogPlus
       @htmllogfile.sync = true
 
       # Begin HTML log file
+      @messagenum = 0
       start_html_file
     end
   end
@@ -144,23 +146,27 @@ class Cinch::LogPlus
   end
 
   def log_html_message(msg)
+    # Used for creating unique message IDs, see below
+    @messagenum += 1
+
     str = <<-HTML
-      <tr>
+      <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
     HTML
 
     if msg.channel.opped?(msg.user)
-      str << '        <td class="msgnick opped">' << msg.user.name << "</td>\n"
+      nickstatus = "opped"
     elsif msg.channel.half_opped?(msg.user)
-      str << '        <td class="msgnick halfopped">' << msg.user.name << "</td>\n"
+      nickstatus = "halfopped"
     elsif msg.channel.voiced?(msg.user)
-      str << '        <td class="msgnick voiced">' << msg.user.name << "</td>\n"
+      nickstatus = "voiced"
     else
-      str << '        <td class="msgnick">' << msg.user.name << "</td>\n"
+      nickstatus = ""
     end
 
-    str << '        <td class="msgmessage">' << msg.message << "</td>\n"
-    str << "        </tr>\n"
+    str << %Q!        <td class="msgnick #{nickstatus}">#{msg.user.name}</td>\n!
+    str << %Q!        <td class="msgmessage">#{msg.message}</td>\n!
+    str << %Q!        </tr>\n!
 
     @htmllogfile.write(str)
   end
