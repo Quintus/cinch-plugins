@@ -38,12 +38,26 @@ class Cinch::LogPlus
 
   DEFAULT_CSS = <<-CSS
     <style type="text/css">
-    td.msgnick {
+    .chattable {
+        border-collapse: collapse;
+     }
+    .msgnick {
         border-right: 1px solid black;
         padding-right: 8px;
         padding-left: 4px;
     }
-    td.msgmessage {
+    .opped {
+        color: #006e21;
+        font-weight: bold;
+     }
+     .halfopped {
+        color: #006e21;
+     }
+    .voiced {
+        color: #00f5ff;
+        font-style: italic;
+     }
+    .msgmessage {
         padding-left: 8px;
     }
     </style>
@@ -130,10 +144,21 @@ class Cinch::LogPlus
     str = <<-HTML
       <tr>
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
-        <td class="msgnick">#{msg.user.name}</td>
-        <td class="msgmessage">#{msg.message}</td>
-      </tr>
     HTML
+
+    if msg.channel.opped?(msg.user)
+      str << '        <td class="msgnick opped">' << msg.user.name << "</td>\n"
+    elsif msg.channel.half_opped?(msg.user)
+      str << '        <td class="msgnick halfopped">' << msg.user.name << "</td>\n"
+    elsif msg.channel.voiced?(msg.user)
+      str << '        <td class="msgnick voiced">' << msg.user.name << "</td>\n"
+    else
+      str << '        <td class="msgnick">' << msg.user.name << "</td>\n"
+    end
+
+    str << '        <td class="msgmessage">' << msg.message << "</td>\n"
+    str << "        </tr>\n"
+
     @htmllogfile.write(str)
   end
 
