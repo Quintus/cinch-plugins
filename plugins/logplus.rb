@@ -38,6 +38,9 @@ class Cinch::LogPlus
 
   DEFAULT_CSS = <<-CSS
     <style type="text/css">
+    body {
+       background-color: white;
+    }
     .chattable {
         border-collapse: collapse;
      }
@@ -54,7 +57,7 @@ class Cinch::LogPlus
         color: #006e21;
      }
     .voiced {
-        color: #00f5ff;
+        color: #00a5ff;
         font-style: italic;
      }
     .msgmessage {
@@ -167,11 +170,20 @@ class Cinch::LogPlus
 <!DOCTYPE HTML>
 <html>
   <head>
-    <title>Chatlogs #{Time.now.strftime('%Y-%m-%d')}</title>
+    <title>Chatlogs #{bot.config.channels.first} #{Time.now.strftime('%Y-%m-%d')}</title>
     <meta charset="utf-8"/>
 #{@extrahead}
   </head>
   <body>
+    <h1>Chatlogs for #{bot.config.channels.first}, #{Time.now.strftime('%Y-%m-%d')}</h1>
+    <p>Nick colors:</p>
+    <dl>
+      <dt class="opped">Nick</dt><dd>Channel operator (+o)</dd>
+      <dt class="halfopped">Nick</dt><dd>Channel half-operator (+h)</dd>
+      <dt class="voiced">Nick</dt><dd>Nick is voiced (+v)</dd>
+      <dt>Nick</dt><dd>Normal nick</dd>
+    </dl>
+    <hr/>
     <table class="chattable">
     HTML
   end
