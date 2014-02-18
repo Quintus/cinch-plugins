@@ -62,7 +62,6 @@ class Cinch::LogPlus
 
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
-  listen_to :action,     :method => :log_public_action
   listen_to :outmsg,     :method => :log_own_message
   timer 5,              :method => :check_midnight
 
@@ -97,6 +96,10 @@ class Cinch::LogPlus
      }
     .msgmessage {
         padding-left: 8px;
+    }
+    .msgaction {
+       padding-left: 8px;
+       font-style: italic;
     }
     </style>
   CSS
@@ -138,11 +141,16 @@ class Cinch::LogPlus
     @last_time_check = time
   end
 
-  # Target for all public channel messages not issued by the bot.
+  # Target for all public channel messages/actions not issued by the bot.
   def log_public_message(msg)
     @filemutex.synchronize do
-      log_plaintext_message(msg)
-      log_html_message(msg)
+      if msg.action?
+        log_plaintext_action(msg)
+        log_html_action(msg)
+      else
+        log_plaintext_message(msg)
+        log_html_message(msg)
+      end
     end
   end
 
@@ -153,12 +161,6 @@ class Cinch::LogPlus
     @filemutex.synchronize do
       log_own_plainmessage(text, is_notice)
       log_own_htmlmessage(text, is_notice)
-    end
-  end
-
-  def log_public_action(msg)
-    @filemutex.synchronize do
-
     end
   end
 
@@ -262,6 +264,27 @@ class Cinch::LogPlus
         <td class="msgmessage">#{text}</td>
       </tr>
     HTML
+  end
+
+  def log_plaintext_action(msg)
+    @plainlogfile.puts(sprintf("%{time} **%{nick} %{msg}",
+                               :time => msg.time.strftime(@timelogformat),
+                               :nick => msg.user.name,
+                               :msg => msg.action_message))
+  end
+
+  def log_html_action(msg)
+    @messagenum += 1
+
+    str = <<-HTML
+      <tr id="msg-#@messagenum">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">*</td>
+        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{msg.action_message}</td>
+      </tr>
+    HTML
+
+    @htmllogfile.write(str)
   end
 
   # Write the start bloat HTML to the HTML log file.
