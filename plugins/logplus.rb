@@ -64,6 +64,8 @@ class Cinch::LogPlus
   listen_to :channel,    :method => :log_public_message
   listen_to :outmsg,     :method => :log_own_message
   listen_to :topic,      :method => :log_topic
+  listen_to :join,       :method => :log_join
+  listen_to :leaving,    :method => :log_leaving
   timer 5,              :method => :check_midnight
 
   # Default CSS used when the :extrahead option is not given.
@@ -107,6 +109,16 @@ class Cinch::LogPlus
        font-weight: bold;
        font-style: italic;
        color: #920002;
+    }
+    .msgjoin {
+       padding-left: 8px;
+       font-style: italic;
+       color: green;
+    }
+    .msgleave {
+       padding-left: 8px;
+       font-style: italic;
+       color: red;
     }
     </style>
   CSS
@@ -173,8 +185,24 @@ class Cinch::LogPlus
 
   # Target for /topic commands.
   def log_topic(msg)
-    log_plaintext_topic(msg)
-    log_html_topic(msg)
+    @filemutex.synchronize do
+      log_plaintext_topic(msg)
+      log_html_topic(msg)
+    end
+  end
+
+  def log_join(msg)
+    @filemutex.synchronize do
+      log_plaintext_join(msg)
+      log_html_join(msg)
+    end
+  end
+
+  def log_leaving(msg, leaving_user)
+    @filemutex.synchronize do
+      log_plaintext_leaving(msg, leaving_user)
+      log_html_leaving(msg, leaving_user)
+    end
   end
 
   private
@@ -189,7 +217,11 @@ class Cinch::LogPlus
   # the message. Returns one of the following strings:
   # "opped", "halfopped", "voiced", "".
   def determine_status(msg)
-    if msg.channel.opped?(msg.user)
+    return "" unless msg.channel # This is nil for leaving users
+
+    if msg.user.name == bot.nick
+      "selfbot"
+    elsif msg.channel.opped?(msg.user)
       "opped"
     elsif msg.channel.half_opped?(msg.user)
       "halfopped"
@@ -323,6 +355,56 @@ class Cinch::LogPlus
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
         <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{msg.message}”.</td>
+      </tr>
+    HTML
+  end
+
+  def log_plaintext_join(msg)
+    @plainlogfile.puts(sprintf("%{time} -->%{nick} entered %{channel}.",
+                               :time => msg.time.strftime(@timelogformat),
+                               :nick => msg.user.name,
+                               :channel => msg.channel.name))
+  end
+
+  def log_html_join(msg)
+    @messagenum += 1
+
+    @htmllogfile.write(<<-HTML)
+      <tr id="msg-#@messagenum">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">--&gt;</td>
+        <td class="msgjoin"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;entered #{msg.channel.name}.</td>
+      </tr>
+    HTML
+  end
+
+  def log_plaintext_leaving(msg, leaving_user)
+    if msg.channel?
+      text = "%{nick} left #{msg.channel.name} (%{msg})"
+    else
+      text = "%{nick} left the IRC network (%{msg})"
+    end
+
+    @plainlogfile.puts(sprintf("%{time} <--#{text}",
+                               :time => msg.time.strftime(@timelogformat),
+                               :nick => leaving_user.name,
+                               :msg => msg.message))
+  end
+
+  def log_html_leaving(msg, leaving_user)
+    @messagenum += 1
+
+    if msg.channel?
+      text = "left #{msg.channel.name} (#{msg.message})"
+    else
+      text = "left the IRC network (#{msg.message})"
+    end
+
+    @htmllogfile.write(<<-HTML)
+      <tr id="msg-#@messagenum">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">&lt;--</td>
+        <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
       </tr>
     HTML
   end
