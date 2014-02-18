@@ -27,6 +27,31 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Cinch’s :channel event does not include messages Cinch sent itself.
+# Especially for logging this is really bad, because the messages sent
+# by the bot wouldn’t show up in the generated logfiles. Therefore, this
+# monkeypatch adds a new :outmsg event to Cinch that is fired each time
+# a PRIVMSG or NOTICE is issued by the bot. It takes the following
+# arguments:
+#
+# [msg]
+#   Always nil, this did not come from the IRC server.
+# [text]
+#   The message we are about to send.
+# [notice]
+#   If true, the message is a NOTICE. Otherwise, it's a PRIVMSG.
+class Cinch::Target
+
+  # Override Cinch’s default message sending so so have an event
+  # to listen for for our own outgoing messages.
+  alias old_msg msg
+  def msg(text, notice = false)
+    @bot.handlers.dispatch(:outmsg, nil, text, notice)
+    old_msg(text, notice)
+  end
+
+end
+
 class Cinch::LogPlus
   include Cinch::Plugin
 
@@ -34,8 +59,11 @@ class Cinch::LogPlus
 
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
+  listen_to :outmsg,     :method => :log_own_message
   timer 5,              :method => :check_midnight
 
+  # Default CSS used when the :extrahead option is not given.
+  # Some default styling.
   DEFAULT_CSS = <<-CSS
     <style type="text/css">
     body {
@@ -60,12 +88,16 @@ class Cinch::LogPlus
         color: #00a5ff;
         font-style: italic;
      }
+     .selfbot {
+       color: #920002;
+     }
     .msgmessage {
         padding-left: 8px;
     }
     </style>
   CSS
 
+  # Called on connect, sets up everything.
   def startup(*)
     @plainlogdir = config[:plainlogdir]
     @htmllogdir  = config[:htmllogdir]
@@ -81,6 +113,8 @@ class Cinch::LogPlus
 
     reopen_logs
 
+    # Disconnect event is not always issued, so we just use
+    # Ruby’s own at_exit hook for cleanup.
     at_exit do
       @filemutex.synchronize do
         finish_html_file
@@ -90,6 +124,7 @@ class Cinch::LogPlus
     end
   end
 
+  # Timer target. Creates new logfiles if midnight has been crossed.
   def check_midnight
     time = Time.now
 
@@ -99,6 +134,7 @@ class Cinch::LogPlus
     @last_time_check = time
   end
 
+  # Target for all public channel messages not issued by the bot.
   def log_public_message(msg)
     @filemutex.synchronize do
       log_plaintext_message(msg)
@@ -106,12 +142,26 @@ class Cinch::LogPlus
     end
   end
 
+  # Target for all messages issued by the bot.
+  def log_own_message(msg, text, is_notice)
+    @filemutex.synchronize do
+      log_own_plainmessage(text, is_notice)
+      log_own_htmlmessage(text, is_notice)
+    end
+  end
+
   private
 
+  # Helper method for generating the file basename for the logfiles
+  # and appending the given extension (which must include the dot).
   def genfilename(ext)
     Time.now.strftime("%Y-%m-%d") + ext
   end
 
+  # Finish a day’s logfiles and open new ones. Note that for the HTML
+  # files, appending is impossible — if you call this method more than
+  # once a day, any existing HTML log file will be overwritten.
+  # This method DOES acquire the file mutex.
   def reopen_logs
     @filemutex.synchronize do
       # Close plain file if existing (startup!)
@@ -138,6 +188,8 @@ class Cinch::LogPlus
     end
   end
 
+  # Logs the given message to the plaintext logfile.
+  # Does NOT acquire the file mutex!
   def log_plaintext_message(msg)
     @plainlogfile.puts(sprintf("%{time} %{nick} | %{msg}",
                                :time => msg.time.strftime(@timelogformat),
@@ -145,6 +197,8 @@ class Cinch::LogPlus
                                :msg => msg.message))
   end
 
+  # Logs the given message to the HTML logfile.
+  # Does NOT acquire the file mutex!
   def log_html_message(msg)
     # Used for creating unique message IDs, see below
     @messagenum += 1
@@ -171,6 +225,31 @@ class Cinch::LogPlus
     @htmllogfile.write(str)
   end
 
+  # Logs the given text to the plaintext logfile. Does NOT
+  # acquire the file mutex!
+  def log_own_plainmessage(text, is_notice)
+    @plainlogfile.puts(sprintf("%{time} %{nick} | %{msg}",
+                               :time => Time.now.strftime(@timelogformat),
+                               :nick => bot.nick,
+                               :msg => text))
+  end
+
+  # Logs the given text to the plaintext logfile. Does NOT
+  # acquire the file mutex!
+  def log_own_htmlmessage(text, is_notice)
+    @messagenum += 1
+
+    @htmllogfile.puts(<<-HTML)
+      <tr id="msg-#@messagenum">
+        <td class="msgtime">#{Time.now.strftime(@timelogformat)}</td>
+        <td class="msgnick selfbot">#{bot.nick}</td>
+        <td class="msgmessage">#{text}</td>
+      </tr>
+    HTML
+  end
+
+  # Write the start bloat HTML to the HTML log file.
+  # Does NOT acquire the file mutex!
   def start_html_file
     @htmllogfile.puts <<-HTML
 <!DOCTYPE HTML>
@@ -187,6 +266,7 @@ class Cinch::LogPlus
       <dt class="opped">Nick</dt><dd>Channel operator (+o)</dd>
       <dt class="halfopped">Nick</dt><dd>Channel half-operator (+h)</dd>
       <dt class="voiced">Nick</dt><dd>Nick is voiced (+v)</dd>
+      <dt class="selfbot">Nick</dt><dd>The logging bot itself</dd>
       <dt>Nick</dt><dd>Normal nick</dd>
     </dl>
     <hr/>
@@ -194,6 +274,8 @@ class Cinch::LogPlus
     HTML
   end
 
+  # Write the end bloat to the HTML log file.
+  # Does NOT acquire the file mutex!
   def finish_html_file
     @htmllogfile.puts <<-HTML
     </table>
