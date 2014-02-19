@@ -51,6 +51,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+require "cgi"
+
 # Cinch’s :channel event does not include messages Cinch sent itself.
 # Especially for logging this is really bad, because the messages sent
 # by the bot wouldn’t show up in the generated logfiles. Therefore, this
@@ -306,7 +308,7 @@ class Cinch::LogPlus
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
-        <td class="msgmessage">#{msg.message}</td>
+        <td class="msgmessage">#{CGI.escape_html(msg.message)}</td>
       </tr>
     HTML
 
@@ -331,7 +333,7 @@ class Cinch::LogPlus
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{Time.now.strftime(@timelogformat)}</td>
         <td class="msgnick selfbot">#{bot.nick}</td>
-        <td class="msgmessage">#{text}</td>
+        <td class="msgmessage">#{CGI.escape_html(text)}</td>
       </tr>
     HTML
   end
@@ -354,7 +356,7 @@ class Cinch::LogPlus
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
-        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{msg.action_message}</td>
+        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{CGI.escape_html(msg.action_message)}</td>
       </tr>
     HTML
 
@@ -379,7 +381,7 @@ class Cinch::LogPlus
       <tr id="msg-#@messagenum">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
-        <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{msg.message}”.</td>
+        <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{CGI.escape_html(msg.message)}”.</td>
       </tr>
     HTML
   end
@@ -420,9 +422,9 @@ class Cinch::LogPlus
     @messagenum += 1
 
     if msg.channel?
-      text = "left #{msg.channel.name} (#{msg.message})"
+      text = "left #{msg.channel.name} (#{CGI.escape_html(msg.message)})"
     else
-      text = "left the IRC network (#{msg.message})"
+      text = "left the IRC network (#{CGI.escape_html(msg.message)})"
     end
 
     @htmllogfile.write(<<-HTML)
