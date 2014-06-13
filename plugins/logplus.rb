@@ -52,6 +52,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require "cgi"
+require "time"
 
 # Cinch’s :channel event does not include messages Cinch sent itself.
 # Especially for logging this is really bad, because the messages sent
@@ -159,7 +160,6 @@ class Cinch::LogPlus
     @last_time_check = Time.now
     @plainlogfile    = nil
     @htmllogfile     = nil
-    @messagenum      = 0
 
     @filemutex = Mutex.new
 
@@ -277,7 +277,6 @@ class Cinch::LogPlus
 
           @htmllogfile = File.open(htmlfile, "w")
           @htmllogfile.sync = true
-          @messagenum = 0
           start_html_file
         end
       else
@@ -290,7 +289,6 @@ class Cinch::LogPlus
           # First bot startup on this day
           @htmllogfile = File.open(htmlfile, "w")
           @htmllogfile.sync = true
-          @messagenum = 0
           start_html_file
         end
       end
@@ -320,11 +318,8 @@ class Cinch::LogPlus
   # Logs the given message to the HTML logfile.
   # Does NOT acquire the file mutex!
   def log_html_message(msg)
-    # Used for creating unique message IDs, see below
-    @messagenum += 1
-
     str = <<-HTML
-      <tr id="msg-#@messagenum">
+      <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
         <td class="msgmessage">#{CGI.escape_html(msg.message)}</td>
@@ -346,11 +341,10 @@ class Cinch::LogPlus
   # Logs the given text to the plaintext logfile. Does NOT
   # acquire the file mutex!
   def log_own_htmlmessage(text, is_notice)
-    @messagenum += 1
-
+    time = Time.now
     @htmllogfile.puts(<<-HTML)
-      <tr id="msg-#@messagenum">
-        <td class="msgtime">#{Time.now.strftime(@timelogformat)}</td>
+      <tr id="#{timestamp_anchor(time)}">
+        <td class="msgtime">#{time.strftime(@timelogformat)}</td>
         <td class="msgnick selfbot">#{bot.nick}</td>
         <td class="msgmessage">#{CGI.escape_html(text)}</td>
       </tr>
@@ -369,10 +363,8 @@ class Cinch::LogPlus
   # Logs the given action to the HTML logfile Does NOT
   # acquire the file mutex!
   def log_html_action(msg)
-    @messagenum += 1
-
     str = <<-HTML
-      <tr id="msg-#@messagenum">
+      <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
         <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{CGI.escape_html(msg.action_message)}</td>
@@ -394,10 +386,8 @@ class Cinch::LogPlus
   # Logs the given topic change to the HTML logfile. Does NOT
   # acquire the file mutex!
   def log_html_topic(msg)
-    @messagenum += 1
-
     @htmllogfile.write(<<-HTML)
-      <tr id="msg-#@messagenum">
+      <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
         <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{CGI.escape_html(msg.message)}”.</td>
@@ -413,10 +403,8 @@ class Cinch::LogPlus
   end
 
   def log_html_join(msg)
-    @messagenum += 1
-
     @htmllogfile.write(<<-HTML)
-      <tr id="msg-#@messagenum">
+      <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">--&gt;</td>
         <td class="msgjoin"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;entered #{msg.channel.name}.</td>
@@ -438,8 +426,6 @@ class Cinch::LogPlus
   end
 
   def log_html_leaving(msg, leaving_user)
-    @messagenum += 1
-
     if msg.channel?
       text = "left #{msg.channel.name} (#{CGI.escape_html(msg.message)})"
     else
@@ -447,12 +433,16 @@ class Cinch::LogPlus
     end
 
     @htmllogfile.write(<<-HTML)
-      <tr id="msg-#@messagenum">
+      <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">&lt;--</td>
         <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
       </tr>
     HTML
+  end
+
+  def timestamp_anchor(time)
+    "msg-#{time.iso8601}"
   end
 
   # Write the start bloat HTML to the HTML log file.
