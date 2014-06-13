@@ -457,6 +457,7 @@ class Cinch::LogPlus
       <dt class="selfbot">Nick</dt><dd>The logging bot itself</dd>
       <dt>Nick</dt><dd>Normal nick</dd>
     </dl>
+    <p>All times are UTC#{Time.now.strftime('%:z')}.</p>
     <hr/>
     <table class="chattable">
     HTML
