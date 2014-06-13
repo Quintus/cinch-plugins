@@ -7,10 +7,14 @@
 
 # Require Cinch
 require "cinch"
+require "fileutils"
 
 # Require our plugins
 require_relative "plugins/echo"
 require_relative "plugins/logplus"
+
+FileUtils.mkdir_p("/tmp/logs/plainlogs")
+FileUtils.mkdir_p("/tmp/logs/htmllogs")
 
 # Define the robot
 cinch = Cinch::Bot.new do

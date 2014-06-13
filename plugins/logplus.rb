@@ -169,7 +169,6 @@ class Cinch::LogPlus
     # Ruby’s own at_exit hook for cleanup.
     at_exit do
       @filemutex.synchronize do
-        finish_html_file
         @htmllogfile.close
         @plainlogfile.close
       end
@@ -259,34 +258,54 @@ class Cinch::LogPlus
     end
   end
 
-  # Finish a day’s logfiles and open new ones. Note that for the HTML
-  # files, appending is impossible — if you call this method more than
-  # once a day, any existing HTML log file will be overwritten.
-  # This method DOES acquire the file mutex.
+  # Finish a day’s logfiles and open new ones.
   def reopen_logs
     @filemutex.synchronize do
-      # Close plain file if existing (startup!)
-      @plainlogfile.close if @plainlogfile
+      #### HTML log file ####
 
-      # Finish & Close HTML file if existing (startup!)
+      # If the bot was restarted, an HTML logfile already exists.
+      # We want to continue that one rather than overwrite.
+      htmlfile = File.join(@htmllogdir, genfilename(".log.html"))
       if @htmllogfile
-        finish_html_file
-        @htmllogfile.close
+        if File.exist?(htmlfile)
+          # This shouldn’t happen (would be a useless call of reopen_logs)
+          # nothing, continue using current file
+        else
+          # Normal midnight log rotation
+          finish_html_file
+          @htmllogfile.close
+
+          @htmllogfile = File.open(htmlfile, "w")
+          @htmllogfile.sync = true
+          @messagenum = 0
+          start_html_file
+        end
+      else
+        if File.exist?(htmlfile)
+          # Bot restart on the same day
+          @htmllogfile = File.open(htmlfile, "a")
+          @htmllogfile.sync = true
+          # Do not write preamble, continue with current file
+        else
+          # First bot startup on this day
+          @htmllogfile = File.open(htmlfile, "w")
+          @htmllogfile.sync = true
+          @messagenum = 0
+          start_html_file
+        end
       end
 
-      # New files
-      bot.info("Opening new logfiles.")
+      #### plain log file ####
+      # This one is easier, we can just open plaintext files in append mode
+      # (they have no preamble and postamble)
+
+      # Close plain file if existing (startup!)
+      @plainlogfile.close if @plainlogfile
       @plainlogfile = File.open(File.join(@plainlogdir, genfilename(".log")), "a")
-      @htmllogfile  = File.open(File.join(@htmllogdir, genfilename(".log.html")), "w") # Can't incrementally update HTML files
-
-      # Log files should always be written directly to disk
       @plainlogfile.sync = true
-      @htmllogfile.sync = true
-
-      # Begin HTML log file
-      @messagenum = 0
-      start_html_file
     end
+
+    bot.info("Opened new logfiles.")
   end
 
   # Logs the given message to the plaintext logfile.
