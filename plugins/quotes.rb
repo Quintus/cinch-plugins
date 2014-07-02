@@ -71,7 +71,7 @@ cinch quote list
 		fd.each { |line| candidates[fd.lineno] = line if line.include? terms }
 		msg.reply('No quotes found matching those search terms.') and return if candidates.length == 0
 		rand_id = rand(candidates.length)
-		msg.reply('Quote #'+candidates.keys[rand_id].to_s+': '+candidates[candidates.keys[rand_id]])
+		msg.reply('Quote #'+(candidates.keys[rand_id]-1).to_s+': '+candidates[candidates.keys[rand_id]])
 	end
 	def list(msg)
 		# POST the entire quote database, formatted, to sprunge.us
