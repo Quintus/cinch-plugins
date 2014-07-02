@@ -82,6 +82,9 @@ Logging
 PidFile
 : Allows you to create a PID file for your Cinch process.
 
+Quotes
+: Simple IRC quotes plugin.
+
 Self
 : This is not a plugin, but rather a helper for writing plugins
   that make Cinch understand messages with start by Cinch’s nickname
