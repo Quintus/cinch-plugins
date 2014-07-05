@@ -94,6 +94,7 @@ class Cinch::LogPlus
   listen_to :join,       :method => :log_join
   listen_to :leaving,    :method => :log_leaving
   listen_to :nick,       :method => :log_nick
+  listen_to :mode_change,:method => :log_modechange
   timer 60,              :method => :check_midnight
 
   # Default CSS used when the :extrahead option is not given.
@@ -133,6 +134,18 @@ class Cinch::LogPlus
        font-style: italic;
     }
     .msgtopic {
+       padding-left: 8px;
+       font-weight: bold;
+       font-style: italic;
+       color: #920002;
+    }
+    .msgnickchange {
+       padding-left: 8px;
+       font-weight: bold;
+       font-style: italic;
+       color: #820002;
+    }
+    .msgmode {
        padding-left: 8px;
        font-weight: bold;
        font-style: italic;
@@ -235,6 +248,13 @@ class Cinch::LogPlus
     @filemutex.synchronize do
       log_plaintext_leaving(msg, leaving_user)
       log_html_leaving(msg, leaving_user)
+    end
+  end
+
+  def log_modechange(msg, ary)
+    @filemutex.synchronize do
+      log_plaintext_modechange(msg, ary)
+      log_html_modechange(msg, ary)
     end
   end
 
@@ -419,7 +439,7 @@ class Cinch::LogPlus
       <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">--</td>
-        <td class="msgtopic"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
+        <td class="msgnickchange"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
       </tr>
     HTML
   end
@@ -466,6 +486,45 @@ class Cinch::LogPlus
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">&lt;--</td>
         <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
+      </tr>
+    HTML
+  end
+
+  def log_plaintext_modechange(msg, changes)
+    adds = changes.select{|subary| subary[0] == :add}
+    removes = changes.select{|subary| subary[0] == :remove}
+
+    change = ""
+    unless removes.empty?
+      change += removes.reduce("-"){|str, subary| str + subary[1] + (subary[2] ? " " + subary[2] : "")}.rstrip
+    end
+    unless adds.empty?
+      change += adds.reduce("+"){|str, subary| str + subary[1] + (subary[2] ? " " + subary[2] : "")}.rstrip
+    end
+
+    @plainlogfile.puts(sprintf("%{time} mode %{change} by %{nick}",
+                               :time => msg.time.strftime(@timelogformat),
+                               :nick => msg.user.name,
+                               :change => change))
+  end
+
+  def log_html_modechange(msg, changes)
+    adds = changes.select{|subary| subary[0] == :add}
+    removes = changes.select{|subary| subary[0] == :remove}
+
+    change = ""
+    unless removes.empty?
+      change += removes.reduce("-"){|str, subary| str + subary[1] + (subary[2] ? " " + subary[2] : "")}.rstrip
+    end
+    unless adds.empty?
+      change += adds.reduce("+"){|str, subary| str + subary[1] + (subary[2] ? " " + subary[2] : "")}.rstrip
+    end
+
+    @htmllogfile.write(<<-HTML)
+      <tr id="#{timestamp_anchor(msg.time)}">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">--</td>
+        <td class="msgmode">Mode #{change} by <span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>.</td>
       </tr>
     HTML
   end
