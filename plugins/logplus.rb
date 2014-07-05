@@ -93,6 +93,7 @@ class Cinch::LogPlus
   listen_to :topic,      :method => :log_topic
   listen_to :join,       :method => :log_join
   listen_to :leaving,    :method => :log_leaving
+  listen_to :nick,       :method => :log_nick
   timer 60,              :method => :check_midnight
 
   # Default CSS used when the :extrahead option is not given.
@@ -216,6 +217,13 @@ class Cinch::LogPlus
     end
   end
 
+  def log_nick(msg)
+    @filemutex.synchronize do
+      log_plaintext_nick(msg)
+      log_html_nick(msg)
+    end
+  end
+
   def log_join(msg)
     @filemutex.synchronize do
       log_plaintext_join(msg)
@@ -241,17 +249,19 @@ class Cinch::LogPlus
   # Helper method for determining the status of the user sending
   # the message. Returns one of the following strings:
   # "opped", "halfopped", "voiced", "".
-  def determine_status(msg)
+  def determine_status(msg, user = msg.user)
     return "" unless msg.channel # This is nil for leaving users
-    return "" unless msg.user # server-side NOTICEs
+    return "" unless user # server-side NOTICEs
 
-    if msg.user.name == bot.nick
+    user = user.name if user.kind_of?(Cinch::User)
+
+    if user == bot.nick
       "selfbot"
-    elsif msg.channel.opped?(msg.user)
+    elsif msg.channel.opped?(user)
       "opped"
-    elsif msg.channel.half_opped?(msg.user)
+    elsif msg.channel.half_opped?(user)
       "halfopped"
-    elsif msg.channel.voiced?(msg.user)
+    elsif msg.channel.voiced?(user)
       "voiced"
     else
       ""
@@ -391,6 +401,25 @@ class Cinch::LogPlus
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
         <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{CGI.escape_html(msg.message)}”.</td>
+      </tr>
+    HTML
+  end
+
+  def log_plaintext_nick(msg)
+    oldnick = msg.raw.match(/^:(.*?)!/)[1]
+    @plainlogfile.puts(sprintf("%{time} --%{oldnick} is now known as %{newnick}",
+                               :time => msg.time.strftime(@timelogformat),
+                               :oldnick => oldnick,
+                               :newnick => msg.message))
+  end
+
+  def log_html_nick(msg)
+    oldnick = msg.raw.match(/^:(.*?)!/)[1]
+    @htmllogfile.write(<<-HTML)
+      <tr id="#{timestamp_anchor(msg.time)}">
+        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+        <td class="msgnick">--</td>
+        <td class="msgtopic"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
       </tr>
     HTML
   end

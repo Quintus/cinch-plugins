@@ -67,7 +67,7 @@ cinch = Cinch::Bot.new do
   file = open("/tmp/cinch.log", "a")
   file.sync = true
   loggers.push(Cinch::Logger::FormattedLogger.new(file))
-  loggers.first.level = :info
+  loggers.first.level = :debug
 
 end
 
