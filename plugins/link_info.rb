@@ -30,7 +30,7 @@
 # Marvin Gülker (Quintus)
 #
 # == License
-# A named-pipe plugin for Cinch.
+# A link info plugin for Cinch.
 # Copyright © 2012 Marvin Gülker
 #
 # This program is free software: you can redistribute it and/or modify

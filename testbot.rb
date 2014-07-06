@@ -13,6 +13,7 @@ require "fileutils"
 require_relative "plugins/echo"
 require_relative "plugins/logplus"
 require_relative "plugins/link_info"
+require_relative "plugins/tickets"
 
 FileUtils.mkdir_p("/tmp/logs/plainlogs")
 FileUtils.mkdir_p("/tmp/logs/htmllogs")
@@ -47,9 +48,13 @@ cinch = Cinch::Bot.new do
       :htmllogdir  => "/tmp/logs/htmllogs"
     }
 
+    config.plugins.options[Cinch::Tickets] = {
+      :url => "http://example.org/tickets/%d"
+    }
+
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::LogPlus, Cinch::LinkInfo]
+    config.plugins.plugins = [Cinch::Echo, Cinch::LogPlus, Cinch::LinkInfo, Cinch::Tickets]
   end
 
   trap "SIGINT" do
