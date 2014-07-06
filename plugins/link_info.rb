@@ -12,7 +12,8 @@
 # Add the following to your bot’s configure.do stanza:
 #
 #   config.plugins.options[Cinch::LinkInfo] = {
-#     :blacklist => [/\.xz$/]
+#     :blacklist => [/\.xz$/],
+#     :no_description => false,
 #   }
 #
 # [blacklist]
@@ -21,6 +22,9 @@
 #   alraedy ignores URLs ending in common image file
 #   extensions, so you don’t have to specify .png, .jpeg,
 #   etc.
+# [no_description]
+#   Set this to true if you want Cinch to not print the
+#   content of the Meta description tag.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -69,11 +73,18 @@ http[s]://...
     html = Nokogiri::HTML(open(url))
 
     if node = html.at_xpath("html/head/title")
-      msg.reply(node.text)
+      msg.reply("Title: #{node.text}")
     end
 
-    if node = html.at_xpath('html/head/meta[@name="description"]')
-      msg.reply(node[:content].lines.first(3).join)
+    if !config[:no_description]
+      node = html.at_xpath('html/head/meta[@name="description"]') || html.at_xpath('html/head/meta[@name="Description"]')
+      if node
+        if node[:content].chars.count > 255
+          msg.reply("Description: #{node[:content].lines.first(3).join("").gsub("\n", " ")[0..255] + "..."}")
+        else
+          msg.reply("Description: #{node[:content]}")
+        end
+      end
     end
   rescue => e
     error "#{e.class.name}: #{e.message}"
