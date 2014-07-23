@@ -87,6 +87,9 @@ class Cinch::LogPlus
 
   set :required_options, [:plainlogdir, :htmllogdir]
 
+  match /log stop/, :method => :cmd_log_stop
+  match /log start/, :method => :cmd_log_start
+
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
   listen_to :outmsg,     :method => :log_own_message
@@ -170,6 +173,7 @@ class Cinch::LogPlus
     @htmllogdir  = config[:htmllogdir]
     @timelogformat = config[:timelogformat] = "%H:%M"
     @extrahead = config[:extrahead] || DEFAULT_CSS
+    @stopped = false
 
     @last_time_check = Time.now
     @plainlogfile    = nil
@@ -199,8 +203,40 @@ class Cinch::LogPlus
     @last_time_check = time
   end
 
+  def cmd_log_stop(msg)
+    if @stopped
+      msg.reply "I do not log currently."
+      return
+    end
+
+    unless msg.channel.opped?(msg.user)
+      msg.reply "You are not authorized to command me so!"
+      return
+    end
+
+    msg.reply "I see. I will close down my ears so everything that follows remains private."
+    @stopped = true
+  end
+
+  def cmd_log_start(msg)
+    unless @stopped
+      msg.reply "I am logging the conversation already."
+      return
+    end
+
+    unless msg.channel.opped?(msg.user)
+      msg.reply "You are not authorized to command me so!"
+      return
+    end
+
+    msg.reply "OK. Everything that follows will be logged again."
+    @stopped = false
+  end
+
   # Target for all public channel messages/actions not issued by the bot.
   def log_public_message(msg)
+    return if @stopped
+
     @filemutex.synchronize do
       if msg.action?
         log_plaintext_action(msg)
@@ -214,6 +250,7 @@ class Cinch::LogPlus
 
   # Target for all messages issued by the bot.
   def log_own_message(msg, text, is_notice, is_private)
+    return if @stopped
     return if is_private # Do not log messages not targetted at the channel
 
     @filemutex.synchronize do
@@ -224,6 +261,8 @@ class Cinch::LogPlus
 
   # Target for /topic commands.
   def log_topic(msg)
+    return if @stopped
+
     @filemutex.synchronize do
       log_plaintext_topic(msg)
       log_html_topic(msg)
@@ -231,6 +270,8 @@ class Cinch::LogPlus
   end
 
   def log_nick(msg)
+    return if @stopped
+
     @filemutex.synchronize do
       log_plaintext_nick(msg)
       log_html_nick(msg)
@@ -238,6 +279,8 @@ class Cinch::LogPlus
   end
 
   def log_join(msg)
+    return if @stopped
+
     @filemutex.synchronize do
       log_plaintext_join(msg)
       log_html_join(msg)
@@ -245,6 +288,8 @@ class Cinch::LogPlus
   end
 
   def log_leaving(msg, leaving_user)
+    return if @stopped
+
     @filemutex.synchronize do
       log_plaintext_leaving(msg, leaving_user)
       log_html_leaving(msg, leaving_user)
@@ -252,6 +297,8 @@ class Cinch::LogPlus
   end
 
   def log_modechange(msg, ary)
+    return if @stopped
+
     @filemutex.synchronize do
       log_plaintext_modechange(msg, ary)
       log_html_modechange(msg, ary)
