@@ -60,6 +60,11 @@ class Cinch::Seen
   end
 
   def execute(msg, nick)
+    if nick == bot.nick
+      msg.reply "Self-reference err err tilt BOOOOM"
+      return
+    end
+
     if info = find_last_message(nick)
       msg.reply("I have last seen #{nick} on #{info.time} saying: #{info.message}")
     else
@@ -72,7 +77,7 @@ class Cinch::Seen
   def find_last_message(nick)
     @filemutex.synchronize do
       @file.rewind
-      @file.lines.each do |line|
+      @file.lines.reverse_each do |line|
         parts = line.split("\0")
 
         if parts[1] == nick
