@@ -55,7 +55,7 @@ class Cinch::GitHub
 		
 		info = JSON.parse(params[:payload])
 		Cinch::GitHub.responses(bot, type, info).each do |rsp|
-			bot.Channel('#synchunk').send(rsp)
+			bot.channels.each{|c| c.send(rsp)}
 		end
 		
 		204
