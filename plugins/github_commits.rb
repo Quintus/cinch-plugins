@@ -71,7 +71,7 @@ class Cinch::GitHub
 		append = omission
 		lines = res.split("\r\n")
 		
-		if lines.length > 0
+		if lines.length > 1
 			omitted = true
 			append = " [#{omission}]"
 			res = lines.first
