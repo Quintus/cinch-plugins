@@ -66,10 +66,26 @@ class Cinch::GitHub
 	end
 	
 	def self.trnc(str, truncate_at, omission = '...')
-		return str unless str.length > truncate_at
+		res = str
+		omitted = false
+		append = omission
+		lines = res.split("\r\n")
 		
-		stop = truncate_at - omission.length
-		"#{str[0...stop]}#{omission}"
+		if lines.length > 0
+			omitted = true
+			append = " [#{omission}]"
+			res = lines.first
+		end
+		
+		if res.length > truncate_at
+			omitted = true
+			append = omission
+			stop = truncate_at - omission.length
+			res = "#{res[0...stop]}"
+		end
+		
+		return res unless omitted
+		return "#{res}#{append}"
 	end
 	
 	def self.responses(bot, type, info)
