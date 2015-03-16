@@ -378,6 +378,14 @@ class Cinch::LogPlus
       @plainlogfile.close if @plainlogfile
       @plainlogfile = File.open(File.join(@plainlogdir, genfilename(".log")), "a")
       @plainlogfile.sync = true
+
+      # Log topic after midnight rotation.
+      unless bot.channels.empty?
+        @plainlogfile.puts(sprintf("%{time} %{nick} | %{msg}",
+                                   :time => Time.now.strftime(@timelogformat),
+                                   :nick => "(system message)",
+                                   :msg => "The topic for this channel is currently “#{bot.channels.first.topic}”."))
+      end
     end
 
     bot.info("Opened new logfiles.")
