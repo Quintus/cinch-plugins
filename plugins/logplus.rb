@@ -605,6 +605,17 @@ class Cinch::LogPlus
     <hr/>
     <table class="chattable">
     HTML
+
+    # On midnight rotation, add the topic to the logs (can be hard to find otherwise).
+    unless bot.channels.empty?
+      @htmllogfile.puts <<-HTML
+      <tr>
+        <td class="msgtime">#{Time.now.strftime(@timelogformat)}</td>
+        <td class="msgnick">(system message)</td>
+        <td class="msgtopic">The topic for this channel is currently “#{CGI.escape_html(bot.channels.first.topic)}”.</td>
+      </tr>
+      HTML
+    end
   end
 
   # Write the end bloat to the HTML log file.
