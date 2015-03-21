@@ -36,7 +36,7 @@
 #
 # == License
 # An advanced logging plugin for Cinch.
-# Copyright © 2014 Marvin Gülker
+# Copyright © 2014,2015 Marvin Gülker
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -53,6 +53,7 @@
 
 require "cgi"
 require "time"
+require_relative "mirc_codes_converter"
 
 # Cinch’s :channel event does not include messages Cinch sent itself.
 # Especially for logging this is really bad, because the messages sent
@@ -403,11 +404,12 @@ class Cinch::LogPlus
   # Logs the given message to the HTML logfile.
   # Does NOT acquire the file mutex!
   def log_html_message(msg)
+    converter = Cinch::MircCodesConverter.new
     str = <<-HTML
       <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
-        <td class="msgmessage">#{CGI.escape_html(msg.message)}</td>
+        <td class="msgmessage">#{converter.convert(CGI.escape_html(msg.message))}</td>
       </tr>
     HTML
 
@@ -448,11 +450,12 @@ class Cinch::LogPlus
   # Logs the given action to the HTML logfile Does NOT
   # acquire the file mutex!
   def log_html_action(msg)
+    converter = Cinch::MircCodesConverter.new
     str = <<-HTML
       <tr id="#{timestamp_anchor(msg.time)}">
         <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
         <td class="msgnick">*</td>
-        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{CGI.escape_html(msg.action_message)}</td>
+        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{converter.convert(CGI.escape_html(msg.action_message))}</td>
       </tr>
     HTML
 

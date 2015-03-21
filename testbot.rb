@@ -15,6 +15,7 @@ require_relative "plugins/logplus"
 require_relative "plugins/link_info"
 require_relative "plugins/tickets"
 require_relative "plugins/seen"
+require_relative "plugins/quit"
 
 FileUtils.mkdir_p("/tmp/logs/plainlogs")
 FileUtils.mkdir_p("/tmp/logs/htmllogs")
@@ -59,7 +60,7 @@ cinch = Cinch::Bot.new do
 
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::LogPlus, Cinch::LinkInfo, Cinch::Tickets, Cinch::Seen]
+    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::LogPlus, Cinch::LinkInfo, Cinch::Tickets, Cinch::Seen]
   end
 
   trap "SIGINT" do
@@ -70,6 +71,23 @@ cinch = Cinch::Bot.new do
   trap "SIGTERM" do
     bot.log("Cought SIGTERM, quitting...", :info)
     bot.quit
+  end
+
+  on :message, /foo/ do |msg|
+    str = "Testing colors:"
+    Cinch::Formatting::Colors.each_key do |color|
+      str << " " << Cinch::Formatting.format(color, color.to_s)
+    end
+    str << " " << Cinch::Formatting.format(:bold, "bold text")
+    str << " " << Cinch::Formatting.format(:yellow, Cinch::Formatting.format(:bold, "yellow bold text"))
+    str << " " << Cinch::Formatting.format(:underline, "underlined text")
+    str << " " << Cinch::Formatting.format(:red, Cinch::Formatting.format(:underline, "red underlined text"))
+    str << " " << Cinch::Formatting.format(:green, Cinch::Formatting.format(:bold, Cinch::Formatting.format(:underline, "green bold underlined text")))
+    str << " Normal again."
+    str << " " << Cinch::Formatting.format(:green, :yellow, "Green on yellow background.")
+    str << " " << Cinch::Formatting.format(:green, :yellow, Cinch::Formatting.format(:italic, "Italic green on yellow background."))
+    p(str)
+    msg.reply(str)
   end
 
   # Set up a logger so we have something more persistant
