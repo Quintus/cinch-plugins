@@ -8,7 +8,7 @@
 #
 # == License
 # A quotes plugin for Cinch.
-# Copyright © 2014 Zach Bloomquist
+# Copyright Â© 2014 Zach Bloomquist
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -78,8 +78,8 @@ cinch quote list
 		quotes = '================================ Quote Listing ================================'+"\n"
 		fd = File.new(@db_location)
 		fd.each { |line| quotes << 'Quote #'+fd.lineno.to_s+': '+line if line.strip }
-		http = Net::HTTP.new('sprunge.us') 
-		response = http.post('/','sprunge='+quotes)
+                uri = URI('http://p.chary.us/')
+                response = Net::HTTP.post_form(uri,'sprunge' => quotes)
 		msg.reply('Quote posting failed.') and return unless response.body
 		msg.reply('Quote list: '+response.body)
 	end
