@@ -55,34 +55,6 @@ require "cgi"
 require "time"
 require_relative "mirc_codes_converter"
 
-# Cinch’s :channel event does not include messages Cinch sent itself.
-# Especially for logging this is really bad, because the messages sent
-# by the bot wouldn’t show up in the generated logfiles. Therefore, this
-# monkeypatch adds a new :outmsg event to Cinch that is fired each time
-# a PRIVMSG or NOTICE is issued by the bot. It takes the following
-# arguments:
-#
-# [msg]
-#   Always nil, this did not come from the IRC server.
-# [text]
-#   The message we are about to send.
-# [notice]
-#   If true, the message is a NOTICE. Otherwise, it's a PRIVMSG.
-# [privatemsg]
-#   If true, the message is to be sent directly to a user rather
-#   than to a public channel.
-class Cinch::Target
-
-  # Override Cinch’s default message sending so so have an event
-  # to listen for for our own outgoing messages.
-  alias old_msg msg
-  def msg(text, notice = false)
-    @bot.handlers.dispatch(:outmsg, nil, text, notice, self.kind_of?(Cinch::User))
-    old_msg(text, notice)
-  end
-
-end
-
 class Cinch::LogPlus
   include Cinch::Plugin
 
