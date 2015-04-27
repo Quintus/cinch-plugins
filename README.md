@@ -53,7 +53,7 @@ to it and have enabled everything in my settings. The result is that I
 don’t notice if anyone reports a new issue or files a PR. I don’t
 actively monitor this repository, so if you don’t want to wait several
 weeks or even months before I even notice your ticket, drop me an
-email at <quintus at quintilianus.eu>.
+email at quintus at quintilianus.eu.
 
 List of plugins
 ---------------
