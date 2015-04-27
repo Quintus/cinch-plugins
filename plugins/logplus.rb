@@ -80,7 +80,7 @@ class Cinch::LogPlus
         Array(messages).each do |msg|
           if msg =~ /^PRIVMSG .*?:/
             @callback.call($', level, false)
-          elsif /^NOTICE .*?:/
+          elsif msg =~ /^NOTICE .*?:/
             @callback.call($', level, true)
           end
         end
