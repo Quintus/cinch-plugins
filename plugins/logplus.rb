@@ -86,6 +86,37 @@ end
 class Cinch::LogPlus
   include Cinch::Plugin
 
+  # Hackish mini class for catching Cinch’s outgoing messages, which
+  # are not covered by the :channel event. It’d be impossible to log
+  # what the bot says otherwise, and compared to monkeypatching Cinch
+  # this is still the cleaner approach.
+  class OutgoingLogger < Cinch::Logger
+
+    # Creates a new instance. The block passed to this method will
+    # be called for each outgoing message. It will receive the
+    # outgoing message (string), the level (symbol), and whether it’s
+    # a NOTICE (true) or PRIVMSG (false) as arguments.
+    def initialize(&callback)
+      super(File.open("/dev/null"))
+      @callback = callback
+    end
+
+    # Logs a message. Calls the callback if the +event+ is
+    # an "outgoing" event.
+    def log(messages, event = :debug, level = event)
+      if event == :outgoing
+        Array(messages).each do |msg|
+          if msg =~ /^PRIVMSG .*?:/
+            @callback.call($', level, false)
+          elsif /^NOTICE .*?:/
+            @callback.call($', level, true)
+          end
+        end
+      end
+    end
+
+  end
+
   set :required_options, [:plainlogdir, :htmllogdir]
 
   match /log stop/, :method => :cmd_log_stop
@@ -93,7 +124,6 @@ class Cinch::LogPlus
 
   listen_to :connect,    :method => :startup
   listen_to :channel,    :method => :log_public_message
-  listen_to :outmsg,     :method => :log_own_message
   listen_to :topic,      :method => :log_topic
   listen_to :join,       :method => :log_join
   listen_to :leaving,    :method => :log_leaving
@@ -182,6 +212,9 @@ class Cinch::LogPlus
 
     @filemutex = Mutex.new
 
+    # Add our hackish logger for catching outgonig messages.
+    bot.loggers.push(OutgoingLogger.new(&method(:log_own_message)))
+
     reopen_logs
 
     # Disconnect event is not always issued, so we just use
@@ -250,9 +283,8 @@ class Cinch::LogPlus
   end
 
   # Target for all messages issued by the bot.
-  def log_own_message(msg, text, is_notice, is_private)
+  def log_own_message(text, level, is_notice)
     return if @stopped
-    return if is_private # Do not log messages not targetted at the channel
 
     @filemutex.synchronize do
       log_own_plainmessage(text, is_notice)

@@ -60,7 +60,7 @@ cinch = Cinch::Bot.new do
 
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::LogPlus, Cinch::LinkInfo, Cinch::Tickets, Cinch::Seen]
+    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::LogPlus]
   end
 
   trap "SIGINT" do
