@@ -44,6 +44,17 @@ As long as this bot runs, everything any program writes to the pipe at
 `/tmp/myfifo` will be echoed to the IRC channel #cinch-bots on
 irc.freenode.net.
 
+Bugs and other notices
+----------------------
+
+For reasons beyond my understanding, GitHub does not send me emails on
+new issues reported against this repository although I am subscribed
+to it and have enabled everything in my settings. The result is that I
+don’t notice if anyone reports a new issue or files a PR. I don’t
+actively monitor this repository, so if you don’t want to wait several
+weeks or even months before I even notice your ticket, drop me an
+email at <quintus at quintilianus.eu>.
+
 List of plugins
 ---------------
 
