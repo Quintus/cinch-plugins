@@ -113,6 +113,9 @@ class Cinch::LogPlus
     .chattable {
         border-collapse: collapse;
      }
+    .chattable tr td {
+      vertical-align: top;
+    }
     .msgnick {
         border-right: 1px solid black;
         padding-right: 8px;
