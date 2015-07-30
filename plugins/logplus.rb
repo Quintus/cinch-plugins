@@ -121,6 +121,13 @@ class Cinch::LogPlus
         padding-right: 8px;
         padding-left: 4px;
     }
+    .msgtime a {
+      text-decoration: none;
+      color: black;
+    }
+    .msgtime a:hover, .msgtime a:active {
+      color: red;
+    }
     .opped {
         color: #006e21;
         font-weight: bold;
@@ -412,9 +419,10 @@ class Cinch::LogPlus
   # Does NOT acquire the file mutex!
   def log_html_message(msg)
     converter = Cinch::MircCodesConverter.new
+    anchor = timestamp_anchor(msg.time)
     str = <<-HTML
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
         <td class="msgmessage">#{converter.convert(CGI.escape_html(msg.message))}</td>
       </tr>
@@ -436,9 +444,10 @@ class Cinch::LogPlus
   # acquire the file mutex!
   def log_own_htmlmessage(text, is_notice)
     time = Time.now
+    anchor = timestamp_anchor(time)
     @htmllogfile.puts(<<-HTML)
-      <tr id="#{timestamp_anchor(time)}">
-        <td class="msgtime">#{time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{time.strftime(@timelogformat)}</a></td>
         <td class="msgnick selfbot">#{bot.nick}</td>
         <td class="msgmessage">#{CGI.escape_html(text)}</td>
       </tr>
@@ -458,9 +467,10 @@ class Cinch::LogPlus
   # acquire the file mutex!
   def log_html_action(msg)
     converter = Cinch::MircCodesConverter.new
+    anchor = timestamp_anchor(msg.time)
     str = <<-HTML
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">*</td>
         <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{converter.convert(CGI.escape_html(msg.action_message))}</td>
       </tr>
@@ -481,9 +491,10 @@ class Cinch::LogPlus
   # Logs the given topic change to the HTML logfile. Does NOT
   # acquire the file mutex!
   def log_html_topic(msg)
+    anchor = timestamp_anchor(msg.time)
     @htmllogfile.write(<<-HTML)
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">*</td>
         <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{CGI.escape_html(msg.message)}”.</td>
       </tr>
@@ -500,9 +511,10 @@ class Cinch::LogPlus
 
   def log_html_nick(msg)
     oldnick = msg.raw.match(/^:(.*?)!/)[1]
+    anchor = timestamp_anchor(msg.time)
     @htmllogfile.write(<<-HTML)
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">--</td>
         <td class="msgnickchange"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
       </tr>
@@ -517,9 +529,10 @@ class Cinch::LogPlus
   end
 
   def log_html_join(msg)
+    anchor = timestamp_anchor(msg.time)
     @htmllogfile.write(<<-HTML)
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">--&gt;</td>
         <td class="msgjoin"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;entered #{msg.channel.name}.</td>
       </tr>
@@ -546,9 +559,10 @@ class Cinch::LogPlus
       text = "left the IRC network (#{CGI.escape_html(msg.message)})"
     end
 
+    anchor = timestamp_anchor(msg.time)
     @htmllogfile.write(<<-HTML)
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">&lt;--</td>
         <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
       </tr>
@@ -585,9 +599,10 @@ class Cinch::LogPlus
       change += adds.reduce("+"){|str, subary| str + subary[1] + (subary[2] ? " " + subary[2] : "")}.rstrip
     end
 
+    anchor = timestamp_anchor(msg.time)
     @htmllogfile.write(<<-HTML)
-      <tr id="#{timestamp_anchor(msg.time)}">
-        <td class="msgtime">#{msg.time.strftime(@timelogformat)}</td>
+      <tr id="#{anchor}">
+        <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(@timelogformat)}</a></td>
         <td class="msgnick">--</td>
         <td class="msgmode">Mode #{change} by <span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>.</td>
       </tr>
