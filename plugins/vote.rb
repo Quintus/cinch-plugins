@@ -57,7 +57,7 @@ require "time"
 class Cinch::Vote
   include Cinch::Plugin
 
-  Vote = Struct.new(:topic, :choices, :covert, :end_time, :running, :voters, :results, :thread) do
+  Vote = Struct.new(:topic, :choices, :covert, :end_time, :running, :voters, :results, :thread, :channel) do
     def initialize(*)
       super
       self.choices = []
@@ -93,6 +93,7 @@ class Cinch::Vote
       @votes.last.voters << user if user && (!config[:auth_required] || user.authed?)
     end
 
+    @votes.last.channel = msg.channel
     msg.reply("Created new vote with ID #{@votes.count}.")
   end
 
@@ -215,6 +216,8 @@ class Cinch::Vote
     vote.results[choicenum.to_i] += 1
 
     msg.reply("Vote registered.")
+
+    check_all_voted(vote)
   end
 
   def on_private_vote(msg, id, choicenum)
@@ -230,6 +233,8 @@ class Cinch::Vote
     vote.results[choicenum.to_i] += 1
 
     msg.reply("Vote registered.")
+
+    check_all_voted(vote)
   end
 
   def on_delete(msg, id)
@@ -253,6 +258,16 @@ class Cinch::Vote
   # call for this vote will return false.
   def check_vote_access!(vote, user)
     vote.voters.delete(user.nick)
+  end
+
+  # Checks if all people who were allowed to vote have voted,
+  # and if so, immediately ends the vote.
+  def check_all_voted(vote)
+    if vote.voters.empty? && vote.running
+      vote.thread.terminate
+      vote.running = false
+      vote.channel.send(Format(:bold, :red, "All people allowed to vote have voted. The vote is thus ended now. Use `#{Cinch::Vote.prefix}vote show <num>' to see the results."))
+    end
   end
 
 end
