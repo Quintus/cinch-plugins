@@ -207,7 +207,7 @@ class Cinch::Vote
     vote = @votes[id.to_i - 1]
 
     msg.reply("No such vote.")                and return unless vote
-    msg.reply("No such choice.")              and return unless vote.choices[choicenum.to_i]
+    msg.reply("No such choice.")              and return unless vote.choices[choicenum.to_i - 1]
     msg.reply("This vote is not running.")    and return unless vote.running
     msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
     msg.reply("Not an open vote.")            and return unless !vote.covert
@@ -224,7 +224,7 @@ class Cinch::Vote
     vote = @votes[id.to_i - 1]
 
     msg.reply("No such vote.")                and return unless vote
-    msg.reply("No such choice.")              and return unless vote.choices[choicenum.to_i]
+    msg.reply("No such choice.")              and return unless vote.choices[choicenum.to_i - 1]
     msg.reply("This vote is not running.")    and return unless vote.running
     msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
     msg.reply("Not a covert vote.")           and return unless vote.covert
