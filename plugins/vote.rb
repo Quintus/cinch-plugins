@@ -81,6 +81,7 @@ class Cinch::Vote
   match /vote on (\d+) (\d+)$/,         :method => :on_public_vote, :react_on => :message
   match /vote on (\d+) (\d+)$/,         :method => :on_private_vote, :react_on => :private
   match /vote delete (\d+)$/,           :method => :on_delete, :react_on => :channel
+  match /vote nicks$/,                  :method => :on_nicks, :react_on => :message
 
   private
 
@@ -246,6 +247,11 @@ class Cinch::Vote
     vote.thread.terminate if vote.thread
 
     msg.reply("Vote deleted.")
+  end
+
+  def on_nicks(msg)
+    msg.reply("These are the nicks that are allowed to vote: #{config[:voters].join(', ')}")
+    msg.reply("The voter must be authenticated against NickServ.") if config[:auth_required]
   end
 
   def check_perms(msg, id)
