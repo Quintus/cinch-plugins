@@ -69,12 +69,12 @@ class Cinch::Vote
     end
   end
 
-  match /vote create (.*)$/,      :method => :on_create, :react_on => :channel
-  match /vote set covert (\d+)$/, :method => :on_set_covert, :react_on => :channel
-  match /vote set public (\d+)$/, :method => :on_set_public, :react_on => :channel
-  match /vote add-choice (\d+) (.*)$/,  :method => :on_add_choice, :react_on => :channel
-  match /vote del-choice (\d+) (\d+)$/, :method => :on_del_choice, :react_on => :channel
-  match /vote set-end (\d+) (.*)$/,     :method => :on_end,  :react_on => :channel
+  match /vote create (.*)$/,            :method => :on_create, :react_on => :channel
+  match /vote set covert (\d+)$/,       :method => :on_set_covert, :react_on => :channel
+  match /vote set public (\d+)$/,       :method => :on_set_public, :react_on => :channel
+  match /vote set end (\d+) (.*)$/,     :method => :on_end,  :react_on => :channel
+  match /vote choice add (\d+) (.*)$/,  :method => :on_add_choice, :react_on => :channel
+  match /vote choice del (\d+) (\d+)$/, :method => :on_del_choice, :react_on => :channel
   match /vote start (\d+)$/,            :method => :on_start, :react_on => :channel
   match /vote list$/,                   :method => :on_list, :react_on => :message
   match /vote show (\d+)$/,             :method => :on_show, :react_on => :message
