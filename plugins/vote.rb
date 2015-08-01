@@ -144,9 +144,14 @@ class Cinch::Vote
     return unless check_perms(msg, id)
 
     vote = @votes[id.to_i - 1]
-    vote.running = true
 
-    vote.thread = Thread.new do
+    if vote.running
+      msg.reply("This vote is running already.")
+      return
+    end
+
+    vote.running = true
+    vote.thread  = Thread.new do
       loop do
         sleep(60)
         break if Time.now >= vote.end_time
