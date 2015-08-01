@@ -89,8 +89,8 @@ class Cinch::Vote
     @votes << Vote.new(topic)
 
     config[:voters].each do |nick|
-      user = User(nick) # nil if not found
-      @votes.last.voters << user if user && (!config[:auth_required] || user.authed?)
+      user = User(nick)
+      @votes.last.voters << user
     end
 
     @votes.last.channel = msg.channel
@@ -212,6 +212,7 @@ class Cinch::Vote
     msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
     msg.reply("Not an open vote.")            and return unless !vote.covert
     msg.reply("You are not allowed to vote.") and return unless check_vote_access!(vote, msg.user)
+    msg.reply("You are not authenticated.")   and return if config[:auth_required] && !msg.user.authed?
 
     vote.results[choicenum.to_i] += 1
 
@@ -229,6 +230,7 @@ class Cinch::Vote
     msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
     msg.reply("Not a covert vote.")           and return unless vote.covert
     msg.reply("You are not allowed to vote.") and return unless check_vote_access!(vote, msg.user)
+    msg.reply("You are not authenticated.")   and return if config[:auth_required] && !msg.user.authed?
 
     vote.results[choicenum.to_i] += 1
 
