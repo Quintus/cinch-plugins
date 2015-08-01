@@ -14,6 +14,7 @@ require_relative "plugins/echo"
 require_relative "plugins/logplus"
 require_relative "plugins/link_info"
 require_relative "plugins/tickets"
+require_relative "plugins/vote"
 require_relative "plugins/seen"
 require_relative "plugins/quit"
 
@@ -58,9 +59,14 @@ cinch = Cinch::Bot.new do
       :file => "/tmp/seenlog.dat"
     }
 
+    config.plugins.options[Cinch::Vote] = {
+      :auth_required => false,
+      :voters => %w[Quintus]
+    }
+
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::LogPlus]
+    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::Vote]
   end
 
   trap "SIGINT" do
