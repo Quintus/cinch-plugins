@@ -79,6 +79,7 @@ class Cinch::Vote
   match /vote list$/,                   :method => :on_list, :react_on => :message
   match /vote show (\d+)$/,             :method => :on_show, :react_on => :message
   match /vote on (\d+) (\d+)$/,         :method => :on_public_vote, :react_on => :message
+  match /vote on (\d+) (\d+)$/,         :method => :on_private_vote, :react_on => :private
   match /vote delete (\d+)$/,           :method => :on_delete, :react_on => :channel
 
   private
@@ -204,6 +205,21 @@ class Cinch::Vote
     msg.reply("This vote is not running.")    and return unless vote.running
     msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
     msg.reply("Not an open vote.")            and return unless !vote.covert
+    msg.reply("You are not allowed to vote.") and return unless check_vote_access!(vote, msg.user)
+
+    vote.results[choicenum.to_i] += 1
+
+    msg.reply("Vote registered.")
+  end
+
+  def on_private_vote(msg, id, choicenum)
+    vote = @votes[id.to_i - 1]
+
+    msg.reply("No such vote.")                and return unless vote
+    msg.reply("No such choice.")              and return unless vote.choices[choicenum.to_i]
+    msg.reply("This vote is not running.")    and return unless vote.running
+    msg.reply("Voting period is over.")       and return unless Time.now <= vote.end_time
+    msg.reply("Not a covert vote.")           and return unless vote.covert
     msg.reply("You are not allowed to vote.") and return unless check_vote_access!(vote, msg.user)
 
     vote.results[choicenum.to_i] += 1
