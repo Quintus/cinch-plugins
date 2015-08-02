@@ -445,11 +445,12 @@ class Cinch::LogPlus
   def log_own_htmlmessage(text, is_notice)
     time = Time.now
     anchor = timestamp_anchor(time)
+    converter = Cinch::MircCodesConverter.new
     @htmllogfile.puts(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{time.strftime(@timelogformat)}</a></td>
         <td class="msgnick selfbot">#{bot.nick}</td>
-        <td class="msgmessage">#{CGI.escape_html(text)}</td>
+        <td class="msgmessage">#{converter.convert(CGI.escape_html(text))}</td>
       </tr>
     HTML
   end
