@@ -185,8 +185,8 @@ class Cinch::Vote
     vote = @votes[id.to_i - 1]
     msg.reply("Vote: #{Format(:bold, :cyan, vote.topic)}")
 
-    msg.reply("This vote is #{Format(:bold, :yellow, vote.running ? 'running' : 'not running')}.")
-    msg.reply("Voting period ends on #{Format(:bold, :yellow, vote.end_time.to_s)}.")
+    msg.reply("This vote is #{Format(:bold, :orange, vote.running ? 'running' : 'not running')}.")
+    msg.reply("Voting period ends on #{Format(:bold, :orange, vote.end_time.to_s)}.")
 
     if vote.choices.empty?
       msg.reply("There are no choices configured for this vote.")
