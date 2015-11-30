@@ -17,6 +17,7 @@ require_relative "plugins/tickets"
 require_relative "plugins/vote"
 require_relative "plugins/seen"
 require_relative "plugins/quit"
+require_relative "plugins/channel_record"
 
 FileUtils.mkdir_p("/tmp/logs/plainlogs")
 FileUtils.mkdir_p("/tmp/logs/htmllogs")
@@ -64,9 +65,13 @@ cinch = Cinch::Bot.new do
       :voters => %w[Quintus]
     }
 
+    config.plugins.options[Cinch::ChannelRecord] = {
+      :file => "/tmp/record.dat"
+    }
+
     #
     ## List of plugins to load
-    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::Vote]
+    config.plugins.plugins = [Cinch::Echo, Cinch::Quit, Cinch::ChannelRecord]
   end
 
   trap "SIGINT" do
