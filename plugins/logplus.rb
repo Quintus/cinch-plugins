@@ -485,7 +485,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">--</td>
+        <td class="msgnick">─</td>
         <td class="msgnickchange"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
       </tr>
     HTML
@@ -496,7 +496,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">--&gt;</td>
+        <td class="msgnick">─►</td>
         <td class="msgjoin"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;entered #{msg.channel.name}.</td>
       </tr>
     HTML
@@ -513,7 +513,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">&lt;--</td>
+        <td class="msgnick">◄─</td>
         <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
       </tr>
     HTML
