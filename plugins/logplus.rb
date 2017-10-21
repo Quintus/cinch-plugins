@@ -122,6 +122,12 @@ class Cinch::LogPlus
     }
     .chattable tr td {
       vertical-align: top;
+      white-space: nowrap;
+      min-width: 10px;
+    }
+    .chattable tr td:last-child {
+      width: 100%;
+      white-space: normal;
     }
     .msgnick {
         border-right: 1px solid black;
