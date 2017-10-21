@@ -190,6 +190,29 @@ class Cinch::LogPlus
        font-style: italic;
        color: red;
     }
+    .nickjoins {
+       color: green;
+    }
+    .nickleaves {
+       color: red;
+    }
+    .navi {
+      font-size: small;
+      margin-bottom: 1px;
+    }
+    .navi-previous {
+      float: left;
+    }
+    .navi-next {
+      float: right;
+    }
+    .navi-index {
+      text-align: center;
+    }
+    .navi p {
+      margin: 0px;
+      padding: 0px;
+    }
     </style>
   CSS
 
@@ -326,8 +349,10 @@ class Cinch::LogPlus
 
   # Helper method for generating the file basename for the logfiles
   # and appending the given extension (which must include the dot).
-  def genfilename(ext)
-    Time.now.strftime("%Y-%m-%d") + ext
+  # The filename is generated for the current day by default, but this
+  # can be changed using the second parameter.
+  def genfilename(ext, time = Time.now)
+    time.strftime("%Y-%m-%d") + ext
   end
 
   # Helper method for determining the status of the user sending
@@ -458,7 +483,7 @@ class Cinch::LogPlus
     str = <<-HTML
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">*</td>
+        <td class="msgnick nickaction">*</td>
         <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{converter.convert(process_message(msg.action_message))}</td>
       </tr>
     HTML
@@ -473,7 +498,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">*</td>
+        <td class="msgnick nickaction">*</td>
         <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{process_message(msg.message)}”.</td>
       </tr>
     HTML
@@ -485,7 +510,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">─</td>
+        <td class="msgnick nickaction">─</td>
         <td class="msgnickchange"><span class="actionnick #{determine_status(msg, oldnick)}">#{oldnick}</span>&nbsp;is now known as <span class="actionnick #{determine_status(msg, msg.message)}">#{msg.message}</span>.</td>
       </tr>
     HTML
@@ -496,7 +521,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">─►</td>
+        <td class="msgnick nickjoins">─►</td>
         <td class="msgjoin"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;entered #{msg.channel.name}.</td>
       </tr>
     HTML
@@ -513,7 +538,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">◄─</td>
+        <td class="msgnick nickleaves">◄─</td>
         <td class="msgleave"><span class="actionnick #{determine_status(msg)}">#{leaving_user.name}</span>&nbsp;#{text}.</td>
       </tr>
     HTML
@@ -535,7 +560,7 @@ class Cinch::LogPlus
     @htmllogfile.write(<<-HTML)
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
-        <td class="msgnick">--</td>
+        <td class="msgnick nickmodechange">─</td>
         <td class="msgmode">Mode #{change} by <span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>.</td>
       </tr>
     HTML
@@ -585,8 +610,17 @@ class Cinch::LogPlus
   # Write the end bloat to the HTML log file.
   # Does NOT acquire the file mutex!
   def finish_html_file
+    now          = Time.now
+    previousname = genfilename(".log.html", now - 60 * 60 * 24)
+    nextname     = genfilename(".log.html", now + 60 * 60 * 24)
     @htmllogfile.puts <<-HTML
     </table>
+    <div class="navi">
+      <p class="navi-previous"><a href="#{previousname}">◄ Previous</a></p>
+      <p class="navi-next"><a href="#{nextname}">Next ►</a></p>
+      <p class="navi-index"><a href="..">◆ Index</a></p>
+      <div style="clear: both"></div>
+    </div>
   </body>
 </html>
     HTML
