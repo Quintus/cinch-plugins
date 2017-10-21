@@ -6,7 +6,7 @@
 # Add the following to your bot’s configure.do stanza:
 #
 #   config.plugins.options[Cinch::History] = {
-#     :file => "/var/cache/seenlog.dat"
+#     :file => "/var/cache/seen.yml"
 #   }
 #
 # [file]
@@ -33,30 +33,26 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+require "yaml"
+
 class Cinch::Seen
   include Cinch::Plugin
 
-  SeenInfo = Struct.new(:time, :nick, :message)
+  SeenInfo = Struct.new(:time, :nick, :channel, :message)
+  FILEMUTEX = Mutex.new
 
   match /seen (.*)/
   listen_to :connect, :method => :on_connect
   listen_to :channel, :method => :on_channel
 
   def on_connect(*)
-    @filepath = config[:file] || raise("Missing required argument: :file")
-    @file = File.open(@filepath, "a+")
-    @file.seek(0, File::SEEK_END) # Work around Ruby bug https://bugs.ruby-lang.org/issues/10039
-    @filemutex = Mutex.new
-
-    at_exit{@file.close}
+    raise("Missing required argument: :file") unless config[:file]
   end
 
   def on_channel(msg)
     return if msg.message.start_with?("\u0001") # ACTION
 
-    @filemutex.synchronize do
-      @file.puts("#{msg.time.to_i}\0#{msg.user.nick}\0#{msg.message.strip}")
-    end
+    add_seen(msg.time, msg.channel.name, msg.user.nick, msg.message.strip)
   end
 
   def execute(msg, nick)
@@ -66,7 +62,7 @@ class Cinch::Seen
     end
 
     if info = find_last_message(nick)
-      msg.reply("I have last seen #{nick} on #{info.time} saying: #{info.message}")
+      msg.reply("I have last seen #{nick} in #{info.channel} on #{info.time} saying: #{info.message}")
     else
       msg.reply("I have not yet seen #{nick} saying something.")
     end
@@ -74,21 +70,21 @@ class Cinch::Seen
 
   private
 
-  def find_last_message(nick)
-    @filemutex.synchronize do
-      @file.rewind
-      @file.lines.reverse_each do |line|
-        parts = line.split("\0")
-
-        if parts[1] == nick
-          return SeenInfo.new(Time.at(parts[0].to_i), parts[1], parts[2])
-        end
-      end
-
-      @file.seek(0, File::SEEK_END)
+  def add_seen(timestamp, channel, nickname, message)
+    FILEMUTEX.synchronize do
+      hsh = File.exist?(config[:file]) ? YAML.load_file(config[:file]) : {}
+      hsh[nickname] = {"time" => timestamp, "channel" => channel, "message" => message}
+      File.open(config[:file], "w"){|f| YAML.dump(hsh, f)}
     end
+  end
 
-    nil
+  def find_last_message(nick)
+    FILEMUTEX.synchronize do
+      hsh = YAML.load_file(config[:file])
+      return nil unless hsh.has_key?(nick)
+
+      SeenInfo.new(hsh[nick]["time"], nick, hsh[nick]["channel"], hsh[nick]["message"])
+    end
   end
 
 end
