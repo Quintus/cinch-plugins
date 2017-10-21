@@ -3,7 +3,7 @@
 # = Cinch GithubCommits plugin
 # This plugin uses the HttpServer plugin for Cinch in order
 # to implement a simple service that understands GitHub’s
-# post-commit webhook (see https://help.github.com/articles/post-receive-hooks).
+# post-commit webhook (see https://developer.github.com/v3/activity/events/types/#pushevent).
 # When a POST request arrives, it will be parsed and a summary
 # of the push results will be echoed to all channels Cinch
 # currently has joined.
@@ -19,7 +19,7 @@
 #
 # == License
 # A Cinch plugin listening for GitHub’s post-receive hooks.
-# Copyright © 2012 Marvin Gülker
+# Copyright © 2012, 2017 Marvin Gülker
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -41,27 +41,28 @@ class Cinch::GithubCommits
   include Cinch::Plugin
   extend Cinch::HttpServer::Verbs
 
-  post "/github_commit" do
-    halt 400 unless params[:payload]
+  Commit = Struct.new(:id, :message, :author, :date)
 
-    info = JSON.parse(params[:payload])
-    repo = info["repository"]["name"]
-    date = DateTime.parse(info["commits"].last["timestamp"]).strftime('%Y-%m-%d %H:%M %:z')
-    author = info["commits"].last["author"]["name"]
-    oid = info["commits"].last["id"][0..7]
-    desc = info["commits"].last["message"]
+  post "/github_commit" do
+    info   = JSON.parse(request.body.read)
+
+    hsh    = info["commits"].sort{|a, b| DateTime.parse(a["timestamp"]) <=> DateTime.parse(b["timestamp"])}.last
+    commit = Commit.new(hsh["id"],
+                        hsh["message"],
+                        hsh["author"]["name"],
+                        DateTime.parse(hsh["timestamp"]))
+    repo   = info["repository"]["name"]
     branch = info["ref"].split("/").last
 
     if info["commits"].count == 1
       bot.channels.each{|c| c.send("[#{repo}] One new commit")}
-      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited #{oid} on #{branch}: #{desc.lines.first.chomp}")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{commit.date.strftime('%Y-%m-%d %H:%M %:z')}, #{commit.author} commited #{commit.id[0..6]} on #{branch}: #{commit.message.lines.first.chomp}")}
     else
       bot.channels.each{|c| c.send("[#{repo}] #{info["commits"].count} new commits")}
-      bot.channels.each{|c| c.send("[#{repo}] On #{date}, #{author} commited the latest one, #{oid} on #{branch}: #{desc.lines.first.chomp}")}
+      bot.channels.each{|c| c.send("[#{repo}] On #{commit.date.strftime('%Y-%m-%d %H:%M %:z')}, #{commit.author} commited the latest one, #{commit.id[0..6]} on #{branch}: #{commit.message.lines.first.chomp}")}
     end
 
     204
   end
-
 
 end
