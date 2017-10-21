@@ -133,24 +133,6 @@
 require "forwardable"
 require "sinatra"
 require "thin"
-# autoload does not work in chroots (obviously). Load everything
-# manually.
-require "thin/server"
-require "thin/daemonizing"
-require "thin/backends/tcp_server"
-require "thin/connection"
-require "thin/request"
-require "thin/response"
-require "thin/headers"
-require "rack/head"
-require "rack/nulllogger"
-require "rack/protection/frame_options"
-require "rack/protection/http_origin"
-require "rack/protection/ip_spoofing"
-require "rack/protection/json_csrf"
-require "rack/protection/path_traversal"
-require "rack/protection/xss_header"
-require "rack/file"
 
 # HTTP Server plugin for Cinch.
 class Cinch::HttpServer
