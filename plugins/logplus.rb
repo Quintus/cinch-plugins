@@ -109,10 +109,23 @@ class Cinch::LogPlus
     <style type="text/css">
     body {
        background-color: white;
+       font-family: sans-serif;
     }
     .chattable {
         border-collapse: collapse;
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+        width: 100%;
      }
+    .chattable tr:target {
+      background-color: yellow;
+    }
+    .chattable tr:hover {
+      background-color: #ddddff;
+    }
+    .chattable tr:target:hover {
+      background-color: #ff9999;
+    }
     .chattable tr td {
       vertical-align: top;
     }
@@ -636,7 +649,6 @@ class Cinch::LogPlus
       <dt>Nick</dt><dd>Normal nick</dd>
     </dl>
     <p>All times are UTC#{Time.now.strftime('%:z')}.</p>
-    <hr/>
     <table class="chattable">
     HTML
 
