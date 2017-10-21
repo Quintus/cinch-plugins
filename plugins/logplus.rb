@@ -346,6 +346,36 @@ class Cinch::LogPlus
     end
   end
 
+  # Helper method that escapes any HTML snippets in the message
+  # (prevents XSS attacks) and scans for URLs, replacing them
+  # with a proper HTML <a> tag.
+  def process_message(message)
+    urls = []
+    # Step 1: Extract all URLs and replace them with a placeholder.
+    message = message.gsub(%r!(https?|ftps?|gopher|irc|xmpp|sip)://[[[:alnum:]]\.,\-_#\+&%$/\(\)\[\]\?=]+!) do
+      urls.push($&)
+      "\x1a" # ASCII SUB, nobody is going to use this in IRC
+    end
+
+    # Step 2: Escape any HTML to prevent XSS and similar things.
+    # This leaves the placeholders untouched. CGI.escape_html
+    # would, if applied to the URLs, escape things like &, which
+    # are valid in an URL.
+    message = CGI.escape_html(message)
+
+    # Step 3: Now re-replace the placeholders with the
+    # extracted URLs converted to HTML.
+    message = message.gsub(/\x1a/) do
+      if url = urls.shift # Single = intended
+        %Q!<a class="msglink" href="#{url}">#{CGI.escape_html(url)}</a>!
+      else # This happens if a user really did use an ASCII SUB.
+        "[parse error]"
+      end
+    end
+
+    message
+  end
+
   # Finish a day’s logfiles and open new ones.
   def reopen_log
     @filemutex.synchronize do
@@ -392,7 +422,7 @@ class Cinch::LogPlus
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
         <td class="msgnick #{determine_status(msg)}">#{msg.user}</td>
-        <td class="msgmessage">#{converter.convert(CGI.escape_html(msg.message))}</td>
+        <td class="msgmessage">#{converter.convert(process_message(msg.message))}</td>
       </tr>
     HTML
 
@@ -409,7 +439,7 @@ class Cinch::LogPlus
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{time.strftime(timelogformat)}</a></td>
         <td class="msgnick selfbot">#{bot.nick}</td>
-        <td class="msgmessage">#{converter.convert(CGI.escape_html(text))}</td>
+        <td class="msgmessage">#{converter.convert(process_message(text))}</td>
       </tr>
     HTML
   end
@@ -423,7 +453,7 @@ class Cinch::LogPlus
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
         <td class="msgnick">*</td>
-        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{converter.convert(CGI.escape_html(msg.action_message))}</td>
+        <td class="msgaction"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;#{converter.convert(process_message(msg.action_message))}</td>
       </tr>
     HTML
 
@@ -438,7 +468,7 @@ class Cinch::LogPlus
       <tr id="#{anchor}">
         <td class="msgtime"><a href="##{anchor}">#{msg.time.strftime(timelogformat)}</a></td>
         <td class="msgnick">*</td>
-        <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{CGI.escape_html(msg.message)}”.</td>
+        <td class="msgtopic"><span class="actionnick #{determine_status(msg)}">#{msg.user.name}</span>&nbsp;changed the topic to “#{process_message(msg.message)}”.</td>
       </tr>
     HTML
   end
@@ -468,9 +498,9 @@ class Cinch::LogPlus
 
   def log_html_leaving(msg, leaving_user)
     if msg.channel?
-      text = "left #{msg.channel.name} (#{CGI.escape_html(msg.message)})"
+      text = "left #{msg.channel.name} (#{process_message(msg.message)})"
     else
-      text = "left the IRC network (#{CGI.escape_html(msg.message)})"
+      text = "left the IRC network (#{process_message(msg.message)})"
     end
 
     anchor = timestamp_anchor(msg.time)
@@ -540,7 +570,7 @@ class Cinch::LogPlus
       <tr>
         <td class="msgtime">#{Time.now.strftime(timelogformat)}</td>
         <td class="msgnick">(system message)</td>
-        <td class="msgtopic">The topic for this channel is currently “#{CGI.escape_html(bot.channels.first.topic)}”.</td>
+        <td class="msgtopic">The topic for this channel is currently “#{process_message(bot.channels.first.topic)}”.</td>
       </tr>
       HTML
     end
