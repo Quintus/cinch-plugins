@@ -5,12 +5,20 @@
 # == Configuration
 # Add the following to your bot’s configure.do stanza:
 #
-#   config.plugins.options[Cinch::History] = {
-#     :file => "/var/cache/seen.yml"
+#   config.plugins.options[Cinch::Seen] = {
+#     :file => "/var/cache/seen.yml",
+#     :max_age => 60 * 60 * 24 * 365
 #   }
 #
 # [file]
 #   Where to store the message log. This is a required
+#   argument.
+# [max_age]
+#   When to purge entries from the "seen" database. After
+#   this amount of seconds since the last time someone was
+#   seen has elapsed, the entry is deleted the next time
+#   the "seen" database is changed. This is a privacy
+#   feature, set to 0 to disable (not recommended). Required
 #   argument.
 #
 # == Author
@@ -18,7 +26,7 @@
 #
 # == License
 # An seen info plugin for Cinch.
-# Copyright © 2014 Marvin Gülker
+# Copyright © 2014, 2017 Marvin Gülker
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -46,7 +54,8 @@ class Cinch::Seen
   listen_to :channel, :method => :on_channel
 
   def on_connect(*)
-    raise("Missing required argument: :file") unless config[:file]
+    raise("Missing required argument: :file")    unless config[:file]
+    raise("Missing required argument: :max_age") unless config[:max_age]
   end
 
   def on_channel(msg)
@@ -64,7 +73,7 @@ class Cinch::Seen
     if info = find_last_message(nick)
       msg.reply("I have last seen #{nick} in #{info.channel} on #{info.time} saying: #{info.message}")
     else
-      msg.reply("I have not yet seen #{nick} saying something.")
+      msg.reply("I have not seen #{nick} saying something as far as I am configured to remember.")
     end
   end
 
@@ -74,6 +83,18 @@ class Cinch::Seen
     FILEMUTEX.synchronize do
       hsh = File.exist?(config[:file]) ? YAML.load_file(config[:file]) : {}
       hsh[nickname] = {"time" => timestamp, "channel" => channel, "message" => message}
+
+      if config[:max_age] > 0
+        old_records = []
+        hsh.each_pair do |nick, entry|
+          if Time.now - entry["time"] >= config[:max_age]
+            old_records << nick
+          end
+        end
+
+        old_records.each{|nick| hsh.delete(nick)}
+      end
+
       File.open(config[:file], "w"){|f| YAML.dump(hsh, f)}
     end
   end
