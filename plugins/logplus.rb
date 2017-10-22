@@ -383,7 +383,7 @@ class Cinch::LogPlus
   def process_message(message)
     urls = []
     # Step 1: Extract all URLs and replace them with a placeholder.
-    message = message.gsub(%r!(https?|ftps?|gopher|irc|xmpp|sip)://[[[:alnum:]]\.,\-_#\+&%$/\(\)\[\]\?=:]+!) do
+    message = message.gsub(%r!(https?|ftps?|gopher|irc|xmpp|sip)://[[[:alnum:]]\.,\-_#\+&%$/\(\)\[\]\?=:@]+!) do
       urls.push($&)
       "\x1a" # ASCII SUB, nobody is going to use this in IRC
     end
