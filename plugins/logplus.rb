@@ -417,11 +417,17 @@ class Cinch::LogPlus
         if File.exist?(htmlfile)
           # This shouldn’t happen (would be a useless call of reopen_log)
           # nothing, continue using current file
-        else
-          # Normal midnight log rotation
-          finish_html_file
-          @htmllogfile.close
+        else # Normal midnight log rotation
+          # At this point, we're already in the new day. Thus, to write the
+          # "previous" navigation we actually need to subtract a little more than
+          # 24 hours to reach the previous file name, which actually now
+          # is the filename from the day before yesterday. For the "next"
+          # navigation entry, that's what we're going to point @htmllogfile
+          # to anyway, so we'll use that.
+          previousname = genfilename(".log.html", Time.now - 60 * 60 * 26)
+          finish_html_file(previousname, File.basename(htmlfile))
 
+          @htmllogfile.close
           @htmllogfile = File.open(htmlfile, "w")
           @htmllogfile.sync = true
           start_html_file
@@ -609,10 +615,7 @@ class Cinch::LogPlus
 
   # Write the end bloat to the HTML log file.
   # Does NOT acquire the file mutex!
-  def finish_html_file
-    now          = Time.now
-    previousname = genfilename(".log.html", now - 60 * 60 * 24)
-    nextname     = genfilename(".log.html", now + 60 * 60 * 24)
+  def finish_html_file(previousname, nextname)
     @htmllogfile.puts <<-HTML
     </table>
     <div class="navi">
