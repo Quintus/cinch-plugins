@@ -73,13 +73,17 @@ class Cinch::LogPlus
     def log(messages, event = :debug, level = event)
       if event == :outgoing
         Array(messages).each do |msg|
-          if msg =~ /^PRIVMSG .*?:/
-            @callback.call($', level, false)
-          elsif msg =~ /^NOTICE .*?:/
-            @callback.call($', level, true)
+          if msg =~ /^PRIVMSG (.*?) :/
+            @callback.call($', $1, level, false)
+          elsif msg =~ /^NOTICE (.*?) :/
+            @callback.call($', $1, level, true)
           end
         end
       end
+    end
+
+    def inspect
+      "#<#{self.class.name} for plugin '#@outlogname'>"
     end
 
   end
@@ -296,8 +300,9 @@ class Cinch::LogPlus
   end
 
   # Target for all messages issued by the bot.
-  def log_own_message(text, level, is_notice)
+  def log_own_message(text, target, level, is_notice)
     return if @stopped
+    return unless target.start_with?("#") # only log channel messages, not PMs by furbot
 
     @filemutex.synchronize do
       log_own_htmlmessage(text, is_notice)
