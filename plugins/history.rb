@@ -55,7 +55,7 @@
 #
 # == License
 # A history plugin for Cinch.
-# Copyright © 2012 Marvin Gülker
+# Copyright © 2012,2019 Marvin Gülker
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -85,11 +85,14 @@ class Cinch::History
   listen_to :leaving, :method => :on_leaving
   listen_to :join,    :method => :on_join
   timer 60,           :method => :check_message_age
-  match /history/,    :method => :replay, :react_on => :private, :use_prefix => false
+  match /history( .+)?/, :method => :replay, :react_on => :private, :use_prefix => false
 
   set :help, <<-HELP
-/msg cinch history
+/msg cinch history [SECONDS]
   Sends the most recent messages of the channel to you via PM.
+  If SECONDS is given, only sends the messages of the last
+  SECONDS seconds to you. If it is not given, a configuration-specific
+  amount of messages is sent to you.
   HELP
 
   def initialize(*)
@@ -112,12 +115,6 @@ class Cinch::History
 
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, msg.user.nick, msg.message)
-
-      if @mode == :max_messages
-        # In :max_messages mode, let messages over the limit just
-        # fall out of the history.
-        @history.shift if @history.length > @max_messages
-      end
     end
   end
 
@@ -170,25 +167,44 @@ class Cinch::History
 
   # In :max_age mode, remove messages from the history older than
   # the threshold.
+  # In :max_messages mode, let messages over the limit fall out of
+  # the history.
   def check_message_age
-    return unless @mode == :max_age
-
     @history_mutex.synchronize do
-      @history.delete_if{|entry| Time.now - entry.time > @max_age}
+      if @mode == :max_age
+        @history.delete_if{|entry| Time.now - entry.time > @max_age}
+      else
+        @history.shift while @history.length > @max_messages
+      end
     end
   end
 
-  def replay(msg)
-    # Informative preamble
-    if @mode == :max_age
-      msg.reply("Here are the messages of the last #@max_age seconds:")
-    else
-      msg.reply("Here are the last #{@history.count} messages:")
+  def replay(msg, seconds)
+    if seconds
+      begin
+        seconds = Integer(seconds.strip)
+      rescue ArgumentError
+        msg.reply("Argument is not a number.")
+        return
+      end
     end
 
     # Create local copy of the history to not stop history creation
     # while someone requests the history.
     history = @history_mutex.synchronize { @history.dup }
+
+    # Filter by age if requested
+    if seconds
+      history.select!{|entry| Time.now - entry.time <= seconds}
+    end
+
+    # Informative preamble
+    if history.empty?
+      msg.reply("I have got no messages from the history for you.")
+      return
+    else
+      msg.reply("I have got #{history.count} messages from the history for you:")
+    end
 
     # Actual historic(al) response
     history.each do |entry|
