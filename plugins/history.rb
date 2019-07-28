@@ -69,6 +69,7 @@
 # 
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+require_relative "logplus" # for Cinch::LogPlus::OutgoingLogger
 
 class Cinch::History
   include Cinch::Plugin
@@ -91,6 +92,11 @@ class Cinch::History
   Sends the most recent messages of the channel to you via PM.
   HELP
 
+  def initialize(*)
+    super
+    bot.loggers.push(Cinch::LogPlus::OutgoingLogger.new("history", &method(:log_own_message)))
+  end
+
   def on_connect(*)
     @mode          = config[:mode]         || :max_messages
     @max_messages  = config[:max_messages] || 10
@@ -112,6 +118,15 @@ class Cinch::History
         # fall out of the history.
         @history.shift if @history.length > @max_messages
       end
+    end
+  end
+
+  def log_own_message(text, target, level, is_notice)
+    return if is_notice
+    return unless target.start_with?("#") # Do not store furbot's PMs
+
+    @history_mutex.synchronize do
+      @history << Entry.new(Time.now, bot.nick, text)
     end
   end
 

@@ -59,12 +59,18 @@ class Cinch::LogPlus
   # this is still the cleaner approach.
   class OutgoingLogger < Cinch::Logger
 
-    # Creates a new instance. The block passed to this method will
-    # be called for each outgoing message. It will receive the
-    # outgoing message (string), the level (symbol), and whether it’s
-    # a NOTICE (true) or PRIVMSG (false) as arguments.
-    def initialize(&callback)
+    # Creates a new instance. The block passed to this method will be
+    # called for each outgoing message. It will receive the outgoing
+    # message (string), the target (string; either a channel or a
+    # nick), the level (symbol), and whether it’s a NOTICE (true) or
+    # PRIVMSG (false) as arguments.
+    #
+    # The +pluginname+ argument is for identifying this object when
+    # printing cinch's loggers. Set it to the name of the plugin using
+    # the instance.
+    def initialize(pluginname, &callback)
       super(File.open("/dev/null"))
+      @outlogname = pluginname
       @callback = callback
     end
 
@@ -223,7 +229,7 @@ class Cinch::LogPlus
   def initialize(*)
     super
     # Add our hackish logger for catching outgoing messages.
-    bot.loggers.push(OutgoingLogger.new(&method(:log_own_message)))
+    bot.loggers.push(OutgoingLogger.new("logplus", &method(:log_own_message)))
 
     @stopped         = false
     @last_time_check = Time.now
