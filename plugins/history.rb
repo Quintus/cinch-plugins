@@ -27,7 +27,8 @@
 #     :mode => :max_messages,
 #     :max_messages => 10,
 #     # :max_age => 5,
-#     :time_format => "%H:%M"
+#     :time_format => "%H:%M",
+#     :delay => 1
 #   }
 #
 # [mode (:max_messages)]
@@ -44,6 +45,10 @@
 #   When replaying history, Cinch prints the time stamp for each
 #   message next to it, in the format specified via this configuration
 #   option. See date(1) for possible directives.
+# [delay (1)]
+#   IRC networks throttle messages. If too many messages are sent out at
+#   once, they are dropped. Thus, this plugin waits the amount of seconds
+#   specified via this parameter between each message.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -91,6 +96,7 @@ class Cinch::History
     @max_messages  = config[:max_messages] || 10
     @max_age       = (config[:max_age]     || 5 ) * 60
     @timeformat    = config[:time_format]  || "%H:%M"
+    @delay         = config[:delay]        || 1
     @history_mutex = Mutex.new
     @history       = []
   end
@@ -165,20 +171,21 @@ class Cinch::History
       msg.reply("Here are the last #{@history.count} messages:")
     end
 
-    # Actual historic(al) response
-    @history_mutex.synchronize do
-      r = @history.reduce("") do |answer, entry|
-        answer + format_entry(entry)
-      end
+    # Create local copy of the history to not stop history creation
+    # while someone requests the history.
+    history = @history_mutex.synchronize { @history.dup }
 
-      msg.reply(r.chomp)
+    # Actual historic(al) response
+    history.each do |entry|
+      msg.reply(format_entry(entry))
+      sleep(@delay)
     end
   end
 
   private
 
   def format_entry(entry)
-    sprintf("[%s] %15s | %s\n", entry.time.strftime(@timeformat), entry.prefix, entry.message)
+    sprintf("[%s] %15s | %s", entry.time.strftime(@timeformat), entry.prefix, entry.message)
   end
 
 end
