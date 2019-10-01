@@ -28,7 +28,8 @@
 #     :max_messages => 10,
 #     # :max_age => 5,
 #     :time_format => "%H:%M",
-#     :delay => 1
+#     :delay => 1,
+#     :only_talk => false
 #   }
 #
 # [mode (:max_messages)]
@@ -49,6 +50,10 @@
 #   IRC networks throttle messages. If too many messages are sent out at
 #   once, they are dropped. Thus, this plugin waits the amount of seconds
 #   specified via this parameter between each message.
+# [only_talk (false)]
+#  Enabling this option causes furbot to restrict the history to
+#  actual talk and action messages. Most notably, this means that
+#  channel joins and leaves are not remembered.
 #
 # == Author
 # Marvin Gülker (Quintus)
@@ -92,7 +97,8 @@ class Cinch::History
   Sends the most recent messages of the channel to you via PM.
   If SECONDS is given, only sends the messages of the last
   SECONDS seconds to you. If it is not given, a configuration-specific
-  amount of messages is sent to you.
+  amount of messages is sent to you. There is a configuration-specific
+  maximum playback time, beyond which no more messages can be retrieved.
   HELP
 
   def initialize(*)
@@ -106,6 +112,7 @@ class Cinch::History
     @max_age       = (config[:max_age]     || 5 ) * 60
     @timeformat    = config[:time_format]  || "%H:%M"
     @delay         = config[:delay]        || 1
+    @only_talk     = config[:only_talk]    || false
     @history_mutex = Mutex.new
     @history       = []
   end
@@ -134,12 +141,14 @@ class Cinch::History
   end
 
   def on_away(msg)
+    return if @only_talk
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, "##", "#{msg.user.nick} is away (“#{msg.message}”)")
     end
   end
 
   def on_unaway(msg)
+    return if @only_talk
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, "##" "#{msg.user.nick} is back")
     end
@@ -154,12 +163,14 @@ class Cinch::History
   end
 
   def on_leaving(msg, user)
+    return if @only_talk
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, "<=", "#{user.nick} left the channel")
     end
   end
 
   def on_join(msg)
+    return if @only_talk
     @history_mutex.synchronize do
       @history << Entry.new(msg.time, "=>", "#{msg.user.nick} entered the channel")
     end
