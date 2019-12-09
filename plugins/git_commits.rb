@@ -83,6 +83,7 @@ class Cinch::GitCommits
             end
 
             bot.channels.each{|c| c.send("[#{reponame}] On #{timestamp.strftime('%Y-%m-%d %H:%M %:z')}, #{author} commited the latest one, #{head[0..6]}: #{subject.lines.first.chomp}")}
+            @heads[repo] = head
           end
         end
       end
