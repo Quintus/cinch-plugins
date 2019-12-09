@@ -64,7 +64,9 @@ class Cinch::GitCommits
     @heads ||= {}
     if @heads.empty?
       repositories.each do |repo|
-        @heads[repo] = `git rev-parse HEAD`.strip
+        Dir.chdir(repo) do
+          @heads[repo] = `git rev-parse HEAD`.strip
+        end
       end
     else
       repositories.each do |repo|
