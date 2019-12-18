@@ -70,36 +70,52 @@ class Cinch::GitCommits
         @repos[repo] = read_heads(repo)
       end
     else
+      # Handle deleted repositories
+      deleted_repositories = @repos.keys - repositories
+      deleted_repositories.sort.each do |repo|
+        reponame = File.basename(repo).match(/\.git$/).pre_match
+        bot.channels.each{|c| c.send("Deleted Git Repository: #{reponame}")}
+        @repos.delete(repo)
+      end
+
       repositories.each do |repo|
         reponame  = File.basename(repo).match(/\.git$/).pre_match
         new_heads = read_heads(repo)
 
-        new_heads.each_pair do |branch, hash|
-          author, timestamp, subject = `git show -s --format='%an:%at:%s' #{hash}`.split(":")
-          timestamp = Time.at(timestamp.to_i)
+        # Handle new repository
+        unless @repos.has_key?(repo)
+          bot.channels.each{|c| c.send("New Git Repository: #{reponame}")}
+          @repos[repo] = {}
+        end
 
-          unless @repos.has_key?(repo)
-            bot.channels.each{|c| c.send("New Git Repository: #{reponame}")}
-            @repos[repo] = {}
-          end
+        # Handle deleted branches
+        deleted_branches = @repos[repo].keys - new_heads.keys
+        deleted_branches.sort.each do |branch|
+          bot.channels.each{|c| c.send("[#{reponame}] Deleted branch: #{branch}")}
+          @repos[repo].delete(branch)
+        end
+
+        new_heads.each_pair do |branch, hash|
+          author, timestamp, subject = `git -C "#{repo}" show -s --format='%an:%at:%s' #{hash}`.split(":")
+          timestamp = Time.at(timestamp.to_i)
 
           if @repos[repo].has_key?(branch)
             if @repos[repo][branch] == hash # equal hashes = nothing changed
               next
             else # changed hash = new commits
-              commits = `git log --oneline #{@repos[repo][branch]}..#{head}`.lines.count
+              commits = `git -C "#{repo}" log --oneline #{@repos[repo][branch]}..#{hash}`.lines.count
 
               if commits == 1
-                bot.channels.each{|c| c.send("[#{reponame}][#{branch}] One new commit")}
+                bot.channels.each{|c| c.send("[#{reponame}: #{branch}] One new commit")}
               else
-                bot.channels.each{|c| c.send("[#{reponame}][#{branch}] #{commits} new commits")}
+                bot.channels.each{|c| c.send("[#{reponame}: #{branch}] #{commits} new commits")}
               end
             end
-          else
+          else # Handle new branch
             bot.channels.each{|c| c.send("[#{reponame}] New branch: #{branch}")}
           end
 
-          bot.channels.each{|c| c.send("[#{reponame}][#{branch}] On #{timestamp.strftime('%Y-%m-%d %H:%M %:z')}, #{author} commited the latest one, #{head[0..6]}: #{subject.lines.first.chomp}")}
+          bot.channels.each{|c| c.send("[#{reponame}: #{branch}] On #{timestamp.strftime('%Y-%m-%d %H:%M %:z')}, #{author} commited the latest one, #{hash[0..6]}: #{subject.lines.first.chomp}")}
           @repos[repo] = new_heads
         end
       end
